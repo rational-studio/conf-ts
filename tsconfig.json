@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@conf-ts/compiler": ["./packages/@conf-ts/compiler/src"],
+      "@conf-ts/cli": ["./packages/@conf-ts/cli/src"],
+      "@conf-ts/macro": ["./packages/@conf-ts/macro/src"]
+    }
+  },
+  "include": ["packages/**/*.ts"]
+}

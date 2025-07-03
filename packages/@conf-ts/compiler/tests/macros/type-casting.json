@@ -1,0 +1,10 @@
+{
+  "toString": "123",
+  "toNumber": 123,
+  "toBoolean": true,
+  "constantToString": "456",
+  "constantToBoolean": true,
+  "enumToString": "1",
+  "enumToBoolean": true,
+  "enumToNumber": 1005
+}

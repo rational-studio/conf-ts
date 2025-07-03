@@ -1,0 +1,11 @@
+{
+  "name": "conf-ts",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "format": "pnpm -r format"
+  },
+  
+  "packageManager": "pnpm@10.13.1"
+}

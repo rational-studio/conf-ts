@@ -1,0 +1,9 @@
+{
+  "value": 1,
+  "nested": {
+    "value": 20
+  },
+  "stringTernary": "hello",
+  "booleanTernary": false,
+  "nullTernary": null
+}

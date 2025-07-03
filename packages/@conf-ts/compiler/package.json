@@ -1,0 +1,34 @@
+{
+  "name": "@conf-ts/compiler",
+  "version": "0.0.1",
+  "description": "Compiler for conf-ts.",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.mjs",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "types": "dist/esm/index.d.ts",
+  "scripts": {
+    "test": "vitest",
+    "build": "pnpm run build:cjs && pnpm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "typescript": "^5.8.3",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@conf-ts/macro": "workspace:*",
+    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+    "@types/node": "^24.0.14",
+    "prettier": "^3.6.2",
+    "vitest": "^3.2.4"
+  }
+}

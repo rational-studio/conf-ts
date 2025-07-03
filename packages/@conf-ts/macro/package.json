@@ -1,0 +1,26 @@
+{
+  "name": "@conf-ts/macro",
+  "version": "0.0.1",
+  "description": "Macros for conf-ts.",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.mjs",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "types": "dist/esm/index.d.ts",
+  "scripts": {
+    "build": "pnpm run build:cjs && pnpm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+    "prettier": "^3.6.2"
+  }
+}

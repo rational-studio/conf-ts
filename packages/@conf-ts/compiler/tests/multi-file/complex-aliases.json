@@ -1,0 +1,10 @@
+{
+  "value1": "hello from multi-file",
+  "value2": "from helper 42",
+  "nested": {
+    "enumValue": "multi-file",
+    "constant": "hello from ",
+    "helper": "from helper",
+    "number": 42
+  }
+}

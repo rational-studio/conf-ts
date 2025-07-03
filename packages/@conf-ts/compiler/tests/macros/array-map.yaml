@@ -1,0 +1,8 @@
+mapDouble:
+  - 1
+  - 4
+  - 6
+mapToString:
+  - one
+  - "2"
+  - "3"
