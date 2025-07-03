@@ -1,0 +1,11 @@
+numberEnums:
+  enumValueA: 0
+  enumValueB: 5
+  enumValueC: 6
+stringEnums:
+  stringEnumValueFoo: foo
+  stringEnumValueBar: bar
+initializedEnums:
+  initializedEnumValueA: 10
+  initializedEnumValueB: 15
+  initializedEnumValueC: 30

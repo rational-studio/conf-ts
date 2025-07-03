@@ -1,0 +1,4 @@
+- Use `pnpm` for package management
+- Use `typescript` for type checking
+- Use `vitest` for testing
+- Use `commander` for command-line interface (CLI) development

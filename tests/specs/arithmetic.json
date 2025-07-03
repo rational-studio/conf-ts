@@ -1,0 +1,11 @@
+{
+  "sum": 15,
+  "difference": 13,
+  "product": 24,
+  "quotient": 6,
+  "remainder": 2,
+  "complex": 33,
+  "constantSum": 15,
+  "enumProduct": 100,
+  "mixedOperation": 27
+}

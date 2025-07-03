@@ -1,0 +1,25 @@
+{
+  "name": "@rational/conf-ts",
+  "version": "0.0.1",
+  "description": "A command-line tool to compile a subset of TypeScript files into JSON or YAML, extracting configuration or data.",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^14.0.0",
+    "typescript": "^5.8.3",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "pnpm@10.12.4"
+}
