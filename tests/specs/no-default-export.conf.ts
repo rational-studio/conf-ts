@@ -1,5 +1,5 @@
 export const test = {
   a: 1,
-  b: "test",
+  b: 'test',
   c: true,
 };

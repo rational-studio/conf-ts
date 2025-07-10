@@ -11,7 +11,7 @@ export default {
   product: 4 * 6,
   quotient: 30 / 5,
   remainder: 17 % 3,
-  complex: (10 + 2) * 3 - 5 / 1 + 100 % 7,
+  complex: (10 + 2) * 3 - 5 / 1 + (100 % 7),
   constantSum: MY_CONSTANT + 5,
   enumProduct: MyArithmeticEnum.Val1 * MyArithmeticEnum.Val2,
   mixedOperation: MY_CONSTANT + MyArithmeticEnum.Val2 - 3,

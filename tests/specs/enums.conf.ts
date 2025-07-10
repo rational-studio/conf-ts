@@ -5,8 +5,8 @@ enum MyEnum {
 }
 
 enum MyStringEnum {
-  Foo = "foo",
-  Bar = "bar",
+  Foo = 'foo',
+  Bar = 'bar',
 }
 
 enum MyInitializedEnum {

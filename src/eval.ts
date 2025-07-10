@@ -1,11 +1,11 @@
-import ts from "typescript";
+import ts from 'typescript';
 
 export function evaluate(
   expression: ts.Expression,
   sourceFile: ts.SourceFile,
   typeChecker: ts.TypeChecker,
   enumMap: { [filePath: string]: { [key: string]: any } },
-  loose: boolean
+  loose: boolean,
 ): any {
   if (
     ts.isStringLiteral(expression) ||
@@ -20,7 +20,7 @@ export function evaluate(
         sourceFile,
         typeChecker,
         enumMap,
-        loose
+        loose,
       );
       result += span.literal.text;
     }
@@ -35,7 +35,7 @@ export function evaluate(
     return null;
   } else if (ts.isObjectLiteralExpression(expression)) {
     const obj: { [key: string]: any } = {};
-    expression.properties.forEach((prop) => {
+    expression.properties.forEach(prop => {
       if (ts.isPropertyAssignment(prop)) {
         const name = prop.name.getText(sourceFile);
         obj[name] = evaluate(
@@ -43,7 +43,7 @@ export function evaluate(
           sourceFile,
           typeChecker,
           enumMap,
-          loose
+          loose,
         );
       } else if (ts.isShorthandPropertyAssignment(prop)) {
         const name = prop.name.getText(sourceFile);
@@ -65,16 +65,16 @@ export function evaluate(
               resolvedSymbol.valueDeclaration.getSourceFile(),
               typeChecker,
               enumMap,
-              loose
+              loose,
             );
           } else {
             throw new Error(
-              `Could not resolve shorthand property '${name}' because its declaration is not a variable or has no initializer.`
+              `Could not resolve shorthand property '${name}' because its declaration is not a variable or has no initializer.`,
             );
           }
         } else {
           throw new Error(
-            `Could not find symbol for shorthand property '${name}'.`
+            `Could not find symbol for shorthand property '${name}'.`,
           );
         }
       } else if (ts.isSpreadAssignment(prop)) {
@@ -83,7 +83,7 @@ export function evaluate(
           sourceFile,
           typeChecker,
           enumMap,
-          loose
+          loose,
         );
         Object.assign(obj, spreadObj);
       }
@@ -98,12 +98,12 @@ export function evaluate(
           sourceFile,
           typeChecker,
           enumMap,
-          loose
+          loose,
         );
         elements.push(...spreadElements);
       } else {
         elements.push(
-          evaluate(element, sourceFile, typeChecker, enumMap, loose)
+          evaluate(element, sourceFile, typeChecker, enumMap, loose),
         );
       }
     }
@@ -126,14 +126,14 @@ export function evaluate(
             resolvedSymbol.valueDeclaration.getSourceFile(),
             typeChecker,
             enumMap,
-            loose
+            loose,
           );
         } else if (ts.isEnumMember(resolvedSymbol.valueDeclaration)) {
           const enumName = resolvedSymbol.valueDeclaration.parent.name.getText(
-            resolvedSymbol.valueDeclaration.getSourceFile()
+            resolvedSymbol.valueDeclaration.getSourceFile(),
           );
           const memberName = resolvedSymbol.valueDeclaration.name.getText(
-            resolvedSymbol.valueDeclaration.getSourceFile()
+            resolvedSymbol.valueDeclaration.getSourceFile(),
           );
           const fullEnumMemberName = `${enumName}.${memberName}`;
           if (
@@ -146,7 +146,7 @@ export function evaluate(
       }
     }
     throw new Error(
-      `Unsupported variable type for identifier: ${expression.text}`
+      `Unsupported variable type for identifier: ${expression.text}`,
     );
   } else if (ts.isPropertyAccessExpression(expression)) {
     const name = expression.getText(sourceFile);
@@ -168,7 +168,7 @@ export function evaluate(
               declaration.getSourceFile(),
               typeChecker,
               enumMap,
-              loose
+              loose,
             );
           }
         }
@@ -176,8 +176,8 @@ export function evaluate(
     }
     throw new Error(
       `Unsupported property access expression: ${expression.getText(
-        sourceFile
-      )}`
+        sourceFile,
+      )}`,
     );
   } else if (ts.isBinaryExpression(expression)) {
     const left = evaluate(
@@ -185,14 +185,14 @@ export function evaluate(
       sourceFile,
       typeChecker,
       enumMap,
-      loose
+      loose,
     );
     const right = evaluate(
       expression.right,
       sourceFile,
       typeChecker,
       enumMap,
-      loose
+      loose,
     );
 
     switch (expression.operatorToken.kind) {
@@ -210,25 +210,25 @@ export function evaluate(
         throw new Error(
           `Unsupported binary operator: ${
             ts.SyntaxKind[expression.operatorToken.kind]
-          }`
+          }`,
         );
     }
   } else if (
     ts.isArrowFunction(expression) ||
     ts.isFunctionExpression(expression)
   ) {
-    throw new Error("Unsupported type: Function");
+    throw new Error('Unsupported type: Function');
   } else if (ts.isNewExpression(expression)) {
-    if (expression.expression.getText(sourceFile) === "Date") {
-      throw new Error("Unsupported type: Date");
+    if (expression.expression.getText(sourceFile) === 'Date') {
+      throw new Error('Unsupported type: Date');
     }
     throw new Error(
       `Unsupported "new" expression: ${expression.expression.getText(
-        sourceFile
-      )}`
+        sourceFile,
+      )}`,
     );
   } else if (ts.isCallExpression(expression)) {
-    const TYPE_CASTING_FUNCTIONS = ["String", "Number", "Boolean"];
+    const TYPE_CASTING_FUNCTIONS = ['String', 'Number', 'Boolean'];
     const callee = expression.expression.getText(sourceFile);
     if (loose) {
       if (
@@ -240,26 +240,26 @@ export function evaluate(
           sourceFile,
           typeChecker,
           enumMap,
-          loose
+          loose,
         );
-        if (callee === "String") {
+        if (callee === 'String') {
           return String(argument);
         }
-        if (callee === "Number") {
+        if (callee === 'Number') {
           return Number(argument);
         }
-        if (callee === "Boolean") {
+        if (callee === 'Boolean') {
           return Boolean(argument);
         }
       }
     }
     if (TYPE_CASTING_FUNCTIONS.includes(callee)) {
       throw new Error(
-        "Type casting using String(), Number(), and Boolean() is only allowed in loose mode"
+        'Type casting using String(), Number(), and Boolean() is only allowed in loose mode',
       );
     } else {
       throw new Error(
-        `Unsupported call expression: ${expression.getText(sourceFile)}`
+        `Unsupported call expression: ${expression.getText(sourceFile)}`,
       );
     }
   } else if (ts.isParenthesizedExpression(expression)) {
@@ -268,13 +268,13 @@ export function evaluate(
       sourceFile,
       typeChecker,
       enumMap,
-      loose
+      loose,
     );
   } else if (ts.isRegularExpressionLiteral(expression)) {
-    throw new Error("Unsupported type: RegExp");
+    throw new Error('Unsupported type: RegExp');
   } else {
     throw new Error(
-      `Unsupported syntax kind: ${ts.SyntaxKind[expression.kind]}`
+      `Unsupported syntax kind: ${ts.SyntaxKind[expression.kind]}`,
     );
   }
 }

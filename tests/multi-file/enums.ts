@@ -1,3 +1,3 @@
 export enum MultiFileEnum {
-  Value = "multi-file",
+  Value = 'multi-file',
 }

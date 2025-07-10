@@ -1,9 +1,9 @@
-const name = "John Doe";
+const name = 'John Doe';
 
 enum Greeting {
-  Hello = "Hello",
-  Hi = "Hi",
-  Welcome = "Welcome",
+  Hello = 'Hello',
+  Hi = 'Hi',
+  Welcome = 'Welcome',
 }
 export default {
   name,

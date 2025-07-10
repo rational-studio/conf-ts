@@ -7,7 +7,8 @@
   "scripts": {
     "test": "vitest",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -18,7 +19,9 @@
     "yaml": "^2.8.0"
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
     "@types/node": "^24.0.10",
+    "prettier": "^3.6.2",
     "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.12.4"
