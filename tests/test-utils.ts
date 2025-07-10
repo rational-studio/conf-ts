@@ -5,7 +5,7 @@ import { compile } from "../src/compiler";
 
 const SPEC_DIR = path.join(__dirname, "specs");
 
-export function assertOutput(testName: string) {
+export function assertOutput(testName: string, looseMode = false) {
   const inputFilePath = path.join(SPEC_DIR, `${testName}.conf.ts`);
   const expectedOutputFilePath = path.join(SPEC_DIR, `${testName}.json`);
 
@@ -16,13 +16,19 @@ export function assertOutput(testName: string) {
     "utf-8"
   );
 
-  const jsonResult = compile(inputFilePath, "json");
-  const yamlResult = compile(inputFilePath, "yaml");
+  const jsonResult = compile(inputFilePath, "json", looseMode);
+  const yamlResult = compile(inputFilePath, "yaml", looseMode);
   expect(jsonResult.trimEnd()).toEqual(expectedOutput.trimEnd());
   expect(yamlResult.trimEnd()).toEqual(expectedYamlOutput.trimEnd());
 }
 
-export function assertError(testName: string, expectedError: string) {
+export function assertError(
+  testName: string,
+  expectedError: string,
+  looseMode = false
+) {
   const inputFilePath = path.join(SPEC_DIR, `${testName}.conf.ts`);
-  expect(() => compile(inputFilePath, "json")).toThrow(expectedError);
+  expect(() => compile(inputFilePath, "json", looseMode)).toThrow(
+    expectedError
+  );
 }

@@ -46,6 +46,18 @@ pnpm start src/enums.ts src/constants.ts src/index.ts
 
 The compiled output will be printed to `stdout`.
 
+### Loose Mode
+
+The `--loose` flag enables a more permissive parsing mode. When this flag is not enabled, the compiler enforces stricter type checking. For example, it will throw an error for type castings like `String(123)`.
+
+In loose mode, however, these type castings are permitted, allowing for more flexible data representations. This is particularly useful when you need to convert between types in your configuration files.
+
+To enable loose mode, use the `--loose` flag:
+
+```bash
+pnpm start --loose src/config.ts
+```
+
 ## Development
 
 ### Running Tests

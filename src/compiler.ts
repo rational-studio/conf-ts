@@ -1,15 +1,14 @@
 import ts from "typescript";
-import { stringify } from "yaml";
+import { stringify as yamlStringify } from "yaml";
 import { evaluate } from "./eval";
 
-function _compile(inputFile: string): object {
-  const tsConfigPath = ts.findConfigFile(
-    inputFile,
-    ts.sys.fileExists
-  );
+function _compile(inputFile: string, loose: boolean): object {
+  const tsConfigPath = ts.findConfigFile(inputFile, ts.sys.fileExists);
+
   if (!tsConfigPath) {
     throw new Error("Could not find a tsconfig.json file.");
   }
+
   const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
   const compilerOptions = ts.parseJsonConfigFileContent(
     configFile.config,
@@ -17,14 +16,19 @@ function _compile(inputFile: string): object {
     "./"
   );
 
-  const program = ts.createProgram(compilerOptions.fileNames, compilerOptions.options);
+  const program = ts.createProgram(
+    compilerOptions.fileNames,
+    compilerOptions.options
+  );
   const typeChecker = program.getTypeChecker();
   const enumMap: { [filePath: string]: { [key: string]: any } } = {};
   let output: { [key: string]: any } = {};
 
   // First pass: collect enum values from all files
   for (const sourceFile of program.getSourceFiles()) {
-    if (sourceFile.isDeclarationFile) continue;
+    if (sourceFile.isDeclarationFile) {
+      continue;
+    }
     ts.forEachChild(sourceFile, (node) => {
       if (ts.isEnumDeclaration(node)) {
         let nextEnumValue = 0;
@@ -40,7 +44,8 @@ function _compile(inputFile: string): object {
               member.initializer,
               sourceFile,
               typeChecker,
-              enumMap
+              enumMap,
+              loose
             );
             enumMap[sourceFile.fileName][fullEnumMemberName] = value;
             if (typeof value === "number") {
@@ -56,9 +61,7 @@ function _compile(inputFile: string): object {
   }
 
   // Second pass: evaluate the default export from the entry file only
-  const entrySourceFile = program.getSourceFile(
-    inputFile
-  );
+  const entrySourceFile = program.getSourceFile(inputFile);
   if (entrySourceFile) {
     let foundDefaultExport = false;
     ts.forEachChild(entrySourceFile, (node) => {
@@ -67,7 +70,8 @@ function _compile(inputFile: string): object {
           node.expression,
           entrySourceFile,
           typeChecker,
-          enumMap
+          enumMap,
+          loose
         );
         foundDefaultExport = true;
       }
@@ -82,12 +86,16 @@ function _compile(inputFile: string): object {
   return output;
 }
 
-export function compile(inputFile: string, format: "json" | "yaml") {
-  const output = _compile(inputFile);
+export function compile(
+  inputFile: string,
+  format: "json" | "yaml",
+  loose: boolean
+) {
+  const output = _compile(inputFile, loose);
   if (format === "json") {
     return JSON.stringify(output, null, 2);
   } else if (format === "yaml") {
-    return stringify(output);
+    return yamlStringify(output);
   } else {
     throw new Error(`Unsupported format: ${format}`);
   }

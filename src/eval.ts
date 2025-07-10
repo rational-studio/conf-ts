@@ -4,7 +4,8 @@ export function evaluate(
   expression: ts.Expression,
   sourceFile: ts.SourceFile,
   typeChecker: ts.TypeChecker,
-  enumMap: { [filePath: string]: { [key: string]: any } }
+  enumMap: { [filePath: string]: { [key: string]: any } },
+  loose: boolean
 ): any {
   if (
     ts.isStringLiteral(expression) ||
@@ -14,7 +15,13 @@ export function evaluate(
   } else if (ts.isTemplateExpression(expression)) {
     let result = expression.head.text;
     for (const span of expression.templateSpans) {
-      result += evaluate(span.expression, sourceFile, typeChecker, enumMap);
+      result += evaluate(
+        span.expression,
+        sourceFile,
+        typeChecker,
+        enumMap,
+        loose
+      );
       result += span.literal.text;
     }
     return result;
@@ -35,7 +42,8 @@ export function evaluate(
           prop.initializer,
           sourceFile,
           typeChecker,
-          enumMap
+          enumMap,
+          loose
         );
       } else if (ts.isShorthandPropertyAssignment(prop)) {
         const name = prop.name.getText(sourceFile);
@@ -56,7 +64,8 @@ export function evaluate(
               resolvedSymbol.valueDeclaration.initializer,
               resolvedSymbol.valueDeclaration.getSourceFile(),
               typeChecker,
-              enumMap
+              enumMap,
+              loose
             );
           } else {
             throw new Error(
@@ -73,7 +82,8 @@ export function evaluate(
           prop.expression,
           sourceFile,
           typeChecker,
-          enumMap
+          enumMap,
+          loose
         );
         Object.assign(obj, spreadObj);
       }
@@ -87,11 +97,14 @@ export function evaluate(
           element.expression,
           sourceFile,
           typeChecker,
-          enumMap
+          enumMap,
+          loose
         );
         elements.push(...spreadElements);
       } else {
-        elements.push(evaluate(element, sourceFile, typeChecker, enumMap));
+        elements.push(
+          evaluate(element, sourceFile, typeChecker, enumMap, loose)
+        );
       }
     }
     return elements;
@@ -112,18 +125,21 @@ export function evaluate(
             resolvedSymbol.valueDeclaration.initializer,
             resolvedSymbol.valueDeclaration.getSourceFile(),
             typeChecker,
-            enumMap
+            enumMap,
+            loose
           );
         } else if (ts.isEnumMember(resolvedSymbol.valueDeclaration)) {
-          const enumName =
-            resolvedSymbol.valueDeclaration.parent.name.getText(
-              resolvedSymbol.valueDeclaration.getSourceFile()
-            );
+          const enumName = resolvedSymbol.valueDeclaration.parent.name.getText(
+            resolvedSymbol.valueDeclaration.getSourceFile()
+          );
           const memberName = resolvedSymbol.valueDeclaration.name.getText(
             resolvedSymbol.valueDeclaration.getSourceFile()
           );
           const fullEnumMemberName = `${enumName}.${memberName}`;
-          if (enumMap[sourceFile.fileName] && enumMap[sourceFile.fileName].hasOwnProperty(fullEnumMemberName)) {
+          if (
+            enumMap[sourceFile.fileName] &&
+            enumMap[sourceFile.fileName].hasOwnProperty(fullEnumMemberName)
+          ) {
             return enumMap[sourceFile.fileName][fullEnumMemberName];
           }
         }
@@ -134,7 +150,10 @@ export function evaluate(
     );
   } else if (ts.isPropertyAccessExpression(expression)) {
     const name = expression.getText(sourceFile);
-    if (enumMap[sourceFile.fileName] && enumMap[sourceFile.fileName].hasOwnProperty(name)) {
+    if (
+      enumMap[sourceFile.fileName] &&
+      enumMap[sourceFile.fileName].hasOwnProperty(name)
+    ) {
       return enumMap[sourceFile.fileName][name];
     }
     const symbol = typeChecker.getSymbolAtLocation(expression);
@@ -148,7 +167,8 @@ export function evaluate(
               declaration.initializer,
               declaration.getSourceFile(),
               typeChecker,
-              enumMap
+              enumMap,
+              loose
             );
           }
         }
@@ -164,13 +184,15 @@ export function evaluate(
       expression.left,
       sourceFile,
       typeChecker,
-      enumMap
+      enumMap,
+      loose
     );
     const right = evaluate(
       expression.right,
       sourceFile,
       typeChecker,
-      enumMap
+      enumMap,
+      loose
     );
 
     switch (expression.operatorToken.kind) {
@@ -191,7 +213,10 @@ export function evaluate(
           }`
         );
     }
-  } else if (ts.isArrowFunction(expression) || ts.isFunctionExpression(expression)) {
+  } else if (
+    ts.isArrowFunction(expression) ||
+    ts.isFunctionExpression(expression)
+  ) {
     throw new Error("Unsupported type: Function");
   } else if (ts.isNewExpression(expression)) {
     if (expression.expression.getText(sourceFile) === "Date") {
@@ -203,36 +228,47 @@ export function evaluate(
       )}`
     );
   } else if (ts.isCallExpression(expression)) {
+    const TYPE_CASTING_FUNCTIONS = ["String", "Number", "Boolean"];
     const callee = expression.expression.getText(sourceFile);
-    if (
-      (callee === "String" || callee === "Number" || callee === "Boolean") &&
-      expression.arguments.length === 1
-    ) {
-      const argument = evaluate(
-        expression.arguments[0],
-        sourceFile,
-        typeChecker,
-        enumMap
-      );
-      if (callee === "String") {
-        return String(argument);
-      }
-      if (callee === "Number") {
-        return Number(argument);
-      }
-      if (callee === "Boolean") {
-        return Boolean(argument);
+    if (loose) {
+      if (
+        TYPE_CASTING_FUNCTIONS.includes(callee) &&
+        expression.arguments.length === 1
+      ) {
+        const argument = evaluate(
+          expression.arguments[0],
+          sourceFile,
+          typeChecker,
+          enumMap,
+          loose
+        );
+        if (callee === "String") {
+          return String(argument);
+        }
+        if (callee === "Number") {
+          return Number(argument);
+        }
+        if (callee === "Boolean") {
+          return Boolean(argument);
+        }
       }
     }
-    throw new Error(
-      `Unsupported call expression: ${expression.getText(sourceFile)}`
-    );
+    if (TYPE_CASTING_FUNCTIONS.includes(callee)) {
+      throw new Error(
+        "Type casting using String(), Number(), and Boolean() is only allowed in loose mode"
+      );
+    } else {
+      throw new Error(
+        `Unsupported call expression: ${expression.getText(sourceFile)}`
+      );
+    }
   } else if (ts.isParenthesizedExpression(expression)) {
     return evaluate(
       expression.expression,
       sourceFile,
       typeChecker,
-      enumMap
+      enumMap,
+      loose
     );
   } else if (ts.isRegularExpressionLiteral(expression)) {
     throw new Error("Unsupported type: RegExp");

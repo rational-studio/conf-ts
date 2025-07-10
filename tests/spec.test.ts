@@ -45,8 +45,15 @@ describe("Spec Test", () => {
     assertOutput("arithmetic");
   });
 
-  it("should handle type casting using String(), Number(), and Boolean()", () => {
-    assertOutput("type-casting");
+  it("should throw an error for type casting using String(), Number(), and Boolean() by default", () => {
+    assertError(
+      "type-casting",
+      "Type casting using String(), Number(), and Boolean() is only allowed in loose mode"
+    );
+  });
+
+  it("should handle type casting using String(), Number(), and Boolean() in Loose Mode", () => {
+    assertOutput("type-casting", true);
   });
 
   it("should handle string template literals", () => {
