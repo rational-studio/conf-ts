@@ -4,7 +4,7 @@ export function evaluate(
   expression: ts.Expression,
   sourceFile: ts.SourceFile,
   typeChecker: ts.TypeChecker,
-  enumMap: { [key: string]: any }
+  enumMap: { [filePath: string]: { [key: string]: any } }
 ): any {
   if (
     ts.isStringLiteral(expression) ||
@@ -123,8 +123,8 @@ export function evaluate(
             resolvedSymbol.valueDeclaration.getSourceFile()
           );
           const fullEnumMemberName = `${enumName}.${memberName}`;
-          if (enumMap.hasOwnProperty(fullEnumMemberName)) {
-            return enumMap[fullEnumMemberName];
+          if (enumMap[sourceFile.fileName] && enumMap[sourceFile.fileName].hasOwnProperty(fullEnumMemberName)) {
+            return enumMap[sourceFile.fileName][fullEnumMemberName];
           }
         }
       }
@@ -134,44 +134,23 @@ export function evaluate(
     );
   } else if (ts.isPropertyAccessExpression(expression)) {
     const name = expression.getText(sourceFile);
-    if (enumMap.hasOwnProperty(name)) {
-      return enumMap[name];
+    if (enumMap[sourceFile.fileName] && enumMap[sourceFile.fileName].hasOwnProperty(name)) {
+      return enumMap[sourceFile.fileName][name];
     }
-    const constValue = typeChecker.getConstantValue(expression);
-    if (constValue !== undefined) {
-      return constValue;
-    }
-    // Fallback for imported enums
     const symbol = typeChecker.getSymbolAtLocation(expression);
     if (symbol) {
-      let resolvedSymbol = symbol;
-      if (symbol.flags & ts.SymbolFlags.Alias) {
-        resolvedSymbol = typeChecker.getAliasedSymbol(symbol);
-      }
-      const declarations = resolvedSymbol.getDeclarations();
+      const declarations = symbol.getDeclarations();
       if (declarations && declarations.length > 0) {
         const declaration = declarations[0];
         if (ts.isEnumMember(declaration)) {
-          const enumName = declaration.parent.name.getText(
-            declaration.getSourceFile()
-          );
-          const memberName = declaration.name.getText(
-            declaration.getSourceFile()
-          );
-          const fullEnumMemberName = `${enumName}.${memberName}`;
-          if (enumMap.hasOwnProperty(fullEnumMemberName)) {
-            return enumMap[fullEnumMemberName];
+          if (declaration.initializer) {
+            return evaluate(
+              declaration.initializer,
+              declaration.getSourceFile(),
+              typeChecker,
+              enumMap
+            );
           }
-        } else if (
-          ts.isVariableDeclaration(declaration) &&
-          declaration.initializer
-        ) {
-          return evaluate(
-            declaration.initializer,
-            declaration.getSourceFile(),
-            typeChecker,
-            enumMap
-          );
         }
       }
     }

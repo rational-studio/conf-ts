@@ -2,10 +2,24 @@ import ts from "typescript";
 import { stringify } from "yaml";
 import { evaluate } from "./eval";
 
-function _compile(inputFiles: string[]): object {
-  const program = ts.createProgram(inputFiles, {});
+function _compile(inputFile: string): object {
+  const tsConfigPath = ts.findConfigFile(
+    inputFile,
+    ts.sys.fileExists
+  );
+  if (!tsConfigPath) {
+    throw new Error("Could not find a tsconfig.json file.");
+  }
+  const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+  const compilerOptions = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    "./"
+  );
+
+  const program = ts.createProgram(compilerOptions.fileNames, compilerOptions.options);
   const typeChecker = program.getTypeChecker();
-  const enumMap: { [key: string]: any } = {};
+  const enumMap: { [filePath: string]: { [key: string]: any } } = {};
   let output: { [key: string]: any } = {};
 
   // First pass: collect enum values from all files
@@ -18,7 +32,9 @@ function _compile(inputFiles: string[]): object {
           const enumName = node.name.getText(sourceFile);
           const memberName = member.name.getText(sourceFile);
           const fullEnumMemberName = `${enumName}.${memberName}`;
-
+          if (!enumMap[sourceFile.fileName]) {
+            enumMap[sourceFile.fileName] = {};
+          }
           if (member.initializer) {
             const value = evaluate(
               member.initializer,
@@ -26,12 +42,12 @@ function _compile(inputFiles: string[]): object {
               typeChecker,
               enumMap
             );
-            enumMap[fullEnumMemberName] = value;
+            enumMap[sourceFile.fileName][fullEnumMemberName] = value;
             if (typeof value === "number") {
               nextEnumValue = value + 1;
             }
           } else {
-            enumMap[fullEnumMemberName] = nextEnumValue;
+            enumMap[sourceFile.fileName][fullEnumMemberName] = nextEnumValue;
             nextEnumValue++;
           }
         });
@@ -41,8 +57,8 @@ function _compile(inputFiles: string[]): object {
 
   // Second pass: evaluate the default export from the entry file only
   const entrySourceFile = program.getSourceFile(
-    inputFiles[inputFiles.length - 1]
-  ); // The last input file is the entry file
+    inputFile
+  );
   if (entrySourceFile) {
     let foundDefaultExport = false;
     ts.forEachChild(entrySourceFile, (node) => {
@@ -66,8 +82,8 @@ function _compile(inputFiles: string[]): object {
   return output;
 }
 
-export function compile(inputFiles: string[], format: "json" | "yaml") {
-  const output = _compile(inputFiles);
+export function compile(inputFile: string, format: "json" | "yaml") {
+  const output = _compile(inputFile);
   if (format === "json") {
     return JSON.stringify(output, null, 2);
   } else if (format === "yaml") {
