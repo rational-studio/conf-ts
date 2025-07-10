@@ -14,11 +14,11 @@ function _compile(inputFile: string, loose: boolean): object {
   const compilerOptions = ts.parseJsonConfigFileContent(
     configFile.config,
     ts.sys,
-    './',
+    tsConfigPath.substring(0, tsConfigPath.lastIndexOf('/')),
   );
 
   const program = ts.createProgram(
-    compilerOptions.fileNames,
+    [inputFile, ...compilerOptions.fileNames],
     compilerOptions.options,
   );
   const typeChecker = program.getTypeChecker();
