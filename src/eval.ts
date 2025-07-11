@@ -1,5 +1,7 @@
 import ts from 'typescript';
 
+const TYPE_CASTING_FUNCTIONS = ['String', 'Number', 'Boolean'];
+
 export function evaluate(
   expression: ts.Expression,
   sourceFile: ts.SourceFile,
@@ -228,7 +230,6 @@ export function evaluate(
       )}`,
     );
   } else if (ts.isCallExpression(expression)) {
-    const TYPE_CASTING_FUNCTIONS = ['String', 'Number', 'Boolean'];
     const callee = expression.expression.getText(sourceFile);
     if (loose) {
       if (
