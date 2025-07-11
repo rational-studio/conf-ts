@@ -181,6 +181,31 @@ export function evaluate(
         sourceFile,
       )}`,
     );
+  } else if (ts.isPrefixUnaryExpression(expression)) {
+    const operand = evaluate(
+      expression.operand,
+      sourceFile,
+      typeChecker,
+      enumMap,
+      loose,
+    );
+
+    switch (expression.operator) {
+      case ts.SyntaxKind.PlusToken:
+        return +operand;
+      case ts.SyntaxKind.MinusToken:
+        return -operand;
+      case ts.SyntaxKind.ExclamationToken:
+        return !operand;
+      case ts.SyntaxKind.TildeToken:
+        return ~operand;
+      default:
+        throw new Error(
+          `Unsupported unary operator: ${
+            ts.SyntaxKind[expression.operator]
+          }`,
+        );
+    }
   } else if (ts.isBinaryExpression(expression)) {
     const left = evaluate(
       expression.left,

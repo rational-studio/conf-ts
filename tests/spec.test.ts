@@ -60,4 +60,8 @@ describe('Spec Test', () => {
   it('should handle string template literals', () => {
     assertOutput('string-template-literal');
   });
+
+  it('should handle unary prefix expressions', () => {
+    assertOutput('unary-prefix');
+  });
 });

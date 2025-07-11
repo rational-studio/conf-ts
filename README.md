@@ -48,9 +48,7 @@ The compiled output will be printed to `stdout`.
 
 ### Loose Mode
 
-The `--loose` flag enables a more permissive parsing mode. When this flag is not enabled, the compiler enforces stricter type checking. For example, it will throw an error for type castings like `String(123)`.
-
-In loose mode, however, these type castings are permitted, allowing for more flexible data representations. This is particularly useful when you need to convert between types in your configuration files.
+The `--loose` flag enables a more permissive parsing mode. This is useful when you need to convert between types in your configuration files.
 
 To enable loose mode, use the `--loose` flag:
 
@@ -84,7 +82,11 @@ This tool supports a subset of TypeScript syntax relevant for defining data stru
 - Variable declarations with initializers (for constants)
 - Property access expressions (for accessing enum members or constant values)
 - Binary expressions for basic arithmetic operations on numbers
-- Type casting expressions (e.g., `String(numberVariable)`)
+- Unary prefix expressions (e.g., `+`, `-`, `!`, `~`)
+
+### Loose Mode Features
+
+- Type casting expressions (e.g., `String(numberVariable)`), which may result in a loss of type-safety.
 
 ## Unsupported TypeScript Features
 
