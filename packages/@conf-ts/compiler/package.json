@@ -21,13 +21,14 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "commander": "^14.0.0",
     "typescript": "^5.8.3",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@conf-ts/macro": "workspace:*",
     "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.0.15",
     "prettier": "^3.6.2",
     "vitest": "^3.2.4"
   }
