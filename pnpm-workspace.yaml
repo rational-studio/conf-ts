@@ -1,5 +1,6 @@
 packages:
   - packages/@conf-ts/*
+  - packages/@conf-ts/webpack-loader
 
 onlyBuiltDependencies:
   - esbuild

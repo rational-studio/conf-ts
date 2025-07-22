@@ -1,0 +1,19 @@
+{
+  "name": "@conf-ts/webpack-loader",
+  "version": "0.0.0",
+  "description": "Webpack loader for conf-ts",
+  "main": "dist/cjs/index.js",
+  "scripts": {
+    "build": "pnpm run build:cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json"
+  },
+  "dependencies": {
+    "@conf-ts/compiler": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/webpack": "^5.28.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4",
+    "webpack": "^5.0.0"
+  }
+}
