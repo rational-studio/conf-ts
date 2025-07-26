@@ -24,8 +24,10 @@ function assertOutput(
     'utf-8',
   );
 
-  const jsonResult = JSON.parse(compile(inputFilePath, 'json', macroMode));
-  const yamlResult = compile(inputFilePath, 'yaml', macroMode);
+  const jsonResult = JSON.parse(
+    compile(inputFilePath, 'json', macroMode).output,
+  );
+  const { output: yamlResult } = compile(inputFilePath, 'yaml', macroMode);
   expect(jsonResult).toEqual(expectedOutput);
   expect(yamlResult.trimEnd()).toEqual(expectedYamlOutput.trimEnd());
 }

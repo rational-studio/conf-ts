@@ -10,8 +10,10 @@ export function evaluate(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   macro: boolean,
+  evaluatedFiles: Set<string>,
   context?: { [name: string]: any },
 ): any {
+  evaluatedFiles.add(sourceFile.fileName);
   if (macro) {
     // Populate macroImportsMap for the current sourceFile
     if (!macroImportsMap[sourceFile.fileName]) {
@@ -53,6 +55,7 @@ export function evaluate(
         enumMap,
         macroImportsMap,
         macro,
+        evaluatedFiles,
         context,
       );
       result += span.literal.text;
@@ -78,6 +81,7 @@ export function evaluate(
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
           context,
         );
       } else if (ts.isShorthandPropertyAssignment(prop)) {
@@ -102,6 +106,7 @@ export function evaluate(
               enumMap,
               macroImportsMap,
               macro,
+              evaluatedFiles,
               context,
             );
           } else {
@@ -122,6 +127,7 @@ export function evaluate(
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
           context,
         );
         Object.assign(obj, spreadObj);
@@ -139,6 +145,7 @@ export function evaluate(
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
           context,
         );
         elements.push(...spreadElements);
@@ -151,6 +158,7 @@ export function evaluate(
             enumMap,
             macroImportsMap,
             macro,
+            evaluatedFiles,
             context,
           ),
         );
@@ -183,6 +191,7 @@ export function evaluate(
             enumMap,
             macroImportsMap,
             macro,
+            evaluatedFiles,
             context,
           );
         } else if (ts.isEnumMember(resolvedSymbol.valueDeclaration)) {
@@ -214,6 +223,7 @@ export function evaluate(
         enumMap,
         macroImportsMap,
         macro,
+        evaluatedFiles,
         context,
       );
       const propertyName = expression.name.getText(sourceFile);
@@ -246,6 +256,7 @@ export function evaluate(
               enumMap,
               macroImportsMap,
               macro,
+              evaluatedFiles,
               context,
             );
           }
@@ -253,9 +264,7 @@ export function evaluate(
       }
     }
     throw new Error(
-      `Unsupported property access expression: ${expression.getText(
-        sourceFile,
-      )}`,
+      `Unsupported property access expression: ${expression.getText(sourceFile)}`,
     );
   } else if (ts.isPrefixUnaryExpression(expression)) {
     const operand = evaluate(
@@ -265,6 +274,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
 
@@ -290,6 +300,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
     const right = evaluate(
@@ -299,6 +310,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
 
@@ -346,9 +358,7 @@ export function evaluate(
       throw new Error('Unsupported type: Date');
     }
     throw new Error(
-      `Unsupported "new" expression: ${expression.expression.getText(
-        sourceFile,
-      )}`,
+      `Unsupported "new" expression: ${expression.expression.getText(sourceFile)}`,
     );
   } else if (ts.isCallExpression(expression)) {
     if (macro) {
@@ -358,6 +368,7 @@ export function evaluate(
         typeChecker,
         enumMap,
         macroImportsMap,
+        evaluatedFiles,
       );
     }
     const callee = expression.expression.getText(sourceFile);
@@ -377,6 +388,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
   } else if (ts.isRegularExpressionLiteral(expression)) {
@@ -389,6 +401,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
   } else if (ts.isConditionalExpression(expression)) {
@@ -399,6 +412,7 @@ export function evaluate(
       enumMap,
       macroImportsMap,
       macro,
+      evaluatedFiles,
       context,
     );
     return condition
@@ -409,6 +423,7 @@ export function evaluate(
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
           context,
         )
       : evaluate(
@@ -418,6 +433,7 @@ export function evaluate(
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
           context,
         );
   } else {

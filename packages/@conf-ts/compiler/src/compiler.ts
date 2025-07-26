@@ -40,7 +40,10 @@ function validateMacroImports(
   return macroImports;
 }
 
-function _compile(inputFile: string, macro: boolean): object {
+function _compile(
+  inputFile: string,
+  macro: boolean,
+): { output: object; evaluatedFiles: Set<string> } {
   const tsConfigPath = ts.findConfigFile(inputFile, ts.sys.fileExists);
 
   if (!tsConfigPath) {
@@ -62,6 +65,7 @@ function _compile(inputFile: string, macro: boolean): object {
   const enumMap: { [filePath: string]: { [key: string]: any } } = {};
   const macroImportsMap: { [filePath: string]: Set<string> } = {};
   let output: { [key: string]: any } = {};
+  const evaluatedFiles: Set<string> = new Set();
 
   // First pass: collect enum values and macro imports from all files
   for (const sourceFile of program.getSourceFiles()) {
@@ -93,6 +97,7 @@ function _compile(inputFile: string, macro: boolean): object {
               enumMap,
               macroImportsMap,
               macro,
+              evaluatedFiles,
             );
             enumMap[sourceFile.fileName][fullEnumMemberName] = value;
             if (typeof value === 'number') {
@@ -120,6 +125,7 @@ function _compile(inputFile: string, macro: boolean): object {
           enumMap,
           macroImportsMap,
           macro,
+          evaluatedFiles,
         );
         foundDefaultExport = true;
       }
@@ -131,7 +137,7 @@ function _compile(inputFile: string, macro: boolean): object {
     }
   }
 
-  return output;
+  return { output, evaluatedFiles };
 }
 
 export function compile(
@@ -139,11 +145,12 @@ export function compile(
   format: 'json' | 'yaml',
   macro: boolean,
 ) {
-  const output = _compile(inputFile, macro);
+  const { output, evaluatedFiles } = _compile(inputFile, macro);
+  const fileNames = Array.from(evaluatedFiles);
   if (format === 'json') {
-    return JSON.stringify(output, null, 2);
+    return { output: JSON.stringify(output, null, 2), dependencies: fileNames };
   } else if (format === 'yaml') {
-    return yamlStringify(output);
+    return { output: yamlStringify(output), dependencies: fileNames };
   } else {
     throw new Error(`Unsupported format: ${format}`);
   }

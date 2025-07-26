@@ -18,7 +18,7 @@ program
     'Enable macro mode for compile-time transformations.',
     false,
   )
-  .action(async (fileEntry, options) => {
+  .action((fileEntry, options) => {
     const { format, macro } = options;
 
     if (format !== 'json' && format !== 'yaml') {
@@ -29,7 +29,7 @@ program
     }
 
     try {
-      const result = await compile(fileEntry, format, macro);
+      const { output: result } = compile(fileEntry, format, macro);
       console.log(result);
     } catch (error: any) {
       console.error(`Error: ${error.message}`);

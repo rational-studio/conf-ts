@@ -5,7 +5,8 @@
   "description": "A mini webpack project to test @conf-ts/webpack-loader",
   "main": "dist/index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "test": "pnpm build && node dist/bundle.js"
   },
   "keywords": [],
   "author": "",

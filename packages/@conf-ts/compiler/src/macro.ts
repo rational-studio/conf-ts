@@ -24,6 +24,7 @@ function evaluateTypeCasting(
   typeChecker: ts.TypeChecker,
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
+  evaluatedFiles: Set<string>,
 ) {
   const callee = expression.expression.getText(sourceFile);
   const macroFunction = TYPE_CASTING_FUNCTIONS.find(
@@ -49,6 +50,7 @@ function evaluateTypeCasting(
       enumMap,
       macroImportsMap,
       false, // No macros in macros
+      evaluatedFiles,
     );
     if (callee === 'String') {
       return String(argument);
@@ -69,6 +71,7 @@ function evaluateArrayMap(
   typeChecker: ts.TypeChecker,
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
+  evaluatedFiles: Set<string>,
 ): any {
   const callee = expression.expression.getText(sourceFile);
   const macroFunction = ARRAY_MACRO_FUNCTIONS.find(
@@ -94,6 +97,7 @@ function evaluateArrayMap(
       enumMap,
       macroImportsMap,
       false,
+      evaluatedFiles,
     );
     // The callback function
     const callback = expression.arguments[1];
@@ -157,6 +161,7 @@ function evaluateArrayMap(
         enumMap,
         macroImportsMap,
         true,
+        evaluatedFiles,
         { [paramName]: item },
       );
     });
@@ -170,6 +175,7 @@ export function evaluateMacro(
   typeChecker: ts.TypeChecker,
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
+  evaluatedFiles: Set<string>,
 ): any {
   let result = evaluateTypeCasting(
     expression,
@@ -177,6 +183,7 @@ export function evaluateMacro(
     typeChecker,
     enumMap,
     macroImportsMap,
+    evaluatedFiles,
   );
   if (result !== undefined) {
     return result;
@@ -187,6 +194,7 @@ export function evaluateMacro(
     typeChecker,
     enumMap,
     macroImportsMap,
+    evaluatedFiles,
   );
   if (result !== undefined) {
     return result;
