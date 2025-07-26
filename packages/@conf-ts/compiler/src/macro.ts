@@ -1,6 +1,7 @@
 import ts from 'typescript';
 
 import { MACRO_FUNCTIONS } from './constants';
+import { ConfTSError, SourceLocation } from './error';
 import { evaluate } from './eval';
 
 type MacroFunction = {
@@ -38,8 +39,15 @@ function evaluateTypeCasting(
     const allowedMacroImports =
       macroImportsMap[sourceFile.fileName] || new Set();
     if (!allowedMacroImports.has(callee)) {
-      throw new Error(
+      throw new ConfTSError(
         `Type casting function '${callee}' must be imported from '@conf-ts/macro' to use in macro mode`,
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
       );
     }
 
@@ -85,8 +93,15 @@ function evaluateArrayMap(
     const allowedMacroImports =
       macroImportsMap[sourceFile.fileName] || new Set();
     if (!allowedMacroImports.has(callee)) {
-      throw new Error(
+      throw new ConfTSError(
         `Macro function '${callee}' must be imported from '@conf-ts/macro' to use in macro mode`,
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
       );
     }
     // Evaluate the array argument
@@ -102,12 +117,21 @@ function evaluateArrayMap(
     // The callback function
     const callback = expression.arguments[1];
     if (!ts.isArrowFunction(callback)) {
-      throw new Error('arrayMap: callback must be an arrow function');
+      throw new ConfTSError('arrayMap: callback must be an arrow function', {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, callback.getStart()),
+      });
     }
     // Only allow callbacks that use consts (no external references)
     // We check that the body only uses the parameter and literals
     if (callback.parameters.length !== 1) {
-      throw new Error('arrayMap: callback must have exactly one parameter');
+      throw new ConfTSError(
+        'arrayMap: callback must have exactly one parameter',
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(sourceFile, callback.getStart()),
+        },
+      );
     }
     const paramName = callback.parameters[0].name.getText(sourceFile);
     // Helper to check if an identifier is allowed (either the param or a literal)
@@ -121,8 +145,12 @@ function evaluateArrayMap(
     function checkNode(node: ts.Node): void {
       if (ts.isIdentifier(node)) {
         if (!isAllowedIdentifier(node)) {
-          throw new Error(
+          throw new ConfTSError(
             'arrayMap: callback can only use its parameter and literals',
+            {
+              file: sourceFile.fileName,
+              ...ts.getLineAndCharacterOfPosition(sourceFile, node.getStart()),
+            },
           );
         }
       }
@@ -136,8 +164,15 @@ function evaluateArrayMap(
         !ts.isReturnStatement(stmts[0]) ||
         !stmts[0].expression
       ) {
-        throw new Error(
+        throw new ConfTSError(
           'arrayMap: callback body must be a single return statement',
+          {
+            file: sourceFile.fileName,
+            ...ts.getLineAndCharacterOfPosition(
+              sourceFile,
+              callback.body.getStart(),
+            ),
+          },
         );
       }
       checkNode(stmts[0].expression);
@@ -199,9 +234,13 @@ export function evaluateMacro(
   if (result !== undefined) {
     return result;
   }
-  throw new Error(
+  throw new ConfTSError(
     `Unsupported call expression in macro mode: ${expression.getText(
       sourceFile,
     )}`,
+    {
+      file: sourceFile.fileName,
+      ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+    },
   );
 }

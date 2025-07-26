@@ -3,6 +3,7 @@ import ts from 'typescript';
 import { stringify as yamlStringify } from 'yaml';
 
 import { MACRO_FUNCTIONS, MACRO_PACKAGE } from './constants';
+import { ConfTSError, SourceLocation } from './error';
 import { evaluate } from './eval';
 
 function validateMacroImports(
@@ -48,7 +49,11 @@ function _compile(
   const tsConfigPath = ts.findConfigFile(inputFile, ts.sys.fileExists);
 
   if (!tsConfigPath) {
-    throw new Error('Could not find a tsconfig.json file.');
+    throw new ConfTSError('Could not find a tsconfig.json file.', {
+      file: inputFile,
+      line: 1,
+      character: 1,
+    });
   }
 
   const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
@@ -132,8 +137,13 @@ function _compile(
       }
     });
     if (!foundDefaultExport) {
-      throw new Error(
+      throw new ConfTSError(
         `No default export found in the entry file: ${entrySourceFile.fileName}`,
+        {
+          file: entrySourceFile.fileName,
+          line: 1,
+          character: 1,
+        },
       );
     }
   }
@@ -153,6 +163,10 @@ export function compile(
   } else if (format === 'yaml') {
     return { output: yamlStringify(output), dependencies: fileNames };
   } else {
-    throw new Error(`Unsupported format: ${format}`);
+    throw new ConfTSError(`Unsupported format: ${format}`, {
+      file: 'unknown',
+      line: 1,
+      character: 1,
+    });
   }
 }

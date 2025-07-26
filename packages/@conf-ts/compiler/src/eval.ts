@@ -1,6 +1,7 @@
 import ts from 'typescript';
 
 import { MACRO_FUNCTIONS } from './constants';
+import { ConfTSError, SourceLocation } from './error';
 import { evaluateMacro } from './macro';
 
 const macroModuleSpecifiers = ["'@conf-ts/macro'", '"@conf-ts/macro"'];
@@ -112,13 +113,24 @@ export function evaluate(
               context,
             );
           } else {
-            throw new Error(
+            throw new ConfTSError(
               `Could not resolve shorthand property '${name}' because its declaration is not a variable or has no initializer.`,
+              {
+                file: sourceFile.fileName,
+                ...ts.getLineAndCharacterOfPosition(
+                  sourceFile,
+                  prop.getStart(),
+                ),
+              },
             );
           }
         } else {
-          throw new Error(
+          throw new ConfTSError(
             `Could not find symbol for shorthand property '${name}'.`,
+            {
+              file: sourceFile.fileName,
+              ...ts.getLineAndCharacterOfPosition(sourceFile, prop.getStart()),
+            },
           );
         }
       } else if (ts.isSpreadAssignment(prop)) {
@@ -187,8 +199,15 @@ export function evaluate(
           if (!(declarationList.flags & ts.NodeFlags.Const)) {
             const kind =
               declarationList.flags & ts.NodeFlags.Let ? 'let' : 'var';
-            throw new Error(
+            throw new ConfTSError(
               `Failed to evaluate variable "${expression.text}". Only 'const' declarations are supported, but it was declared with '${kind}'.`,
+              {
+                file: sourceFile.fileName,
+                ...ts.getLineAndCharacterOfPosition(
+                  sourceFile,
+                  expression.getStart(),
+                ),
+              },
             );
           }
           if (resolvedSymbol.valueDeclaration.initializer) {
@@ -220,8 +239,12 @@ export function evaluate(
         }
       }
     }
-    throw new Error(
+    throw new ConfTSError(
       `Unsupported variable type for identifier: ${expression.text}`,
+      {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+      },
     );
   } else if (ts.isPropertyAccessExpression(expression)) {
     try {
@@ -272,8 +295,12 @@ export function evaluate(
         }
       }
     }
-    throw new Error(
+    throw new ConfTSError(
       `Unsupported property access expression: ${expression.getText(sourceFile)}`,
+      {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+      },
     );
   } else if (ts.isPrefixUnaryExpression(expression)) {
     const operand = evaluate(
@@ -297,8 +324,15 @@ export function evaluate(
       case ts.SyntaxKind.TildeToken:
         return ~operand;
       default:
-        throw new Error(
+        throw new ConfTSError(
           `Unsupported unary operator: ${ts.SyntaxKind[expression.operator]}`,
+          {
+            file: sourceFile.fileName,
+            ...ts.getLineAndCharacterOfPosition(
+              sourceFile,
+              expression.getStart(),
+            ),
+          },
         );
     }
   } else if (ts.isBinaryExpression(expression)) {
@@ -351,23 +385,40 @@ export function evaluate(
       case ts.SyntaxKind.ExclamationEqualsEqualsToken:
         return left !== right;
       default:
-        throw new Error(
+        throw new ConfTSError(
           `Unsupported binary operator: ${
             ts.SyntaxKind[expression.operatorToken.kind]
           }`,
+          {
+            file: sourceFile.fileName,
+            ...ts.getLineAndCharacterOfPosition(
+              sourceFile,
+              expression.getStart(),
+            ),
+          },
         );
     }
   } else if (
     ts.isArrowFunction(expression) ||
     ts.isFunctionExpression(expression)
   ) {
-    throw new Error('Unsupported type: Function');
+    throw new ConfTSError('Unsupported type: Function', {
+      file: sourceFile.fileName,
+      ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+    });
   } else if (ts.isNewExpression(expression)) {
     if (expression.expression.getText(sourceFile) === 'Date') {
-      throw new Error('Unsupported type: Date');
+      throw new ConfTSError('Unsupported type: Date', {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+      });
     }
-    throw new Error(
+    throw new ConfTSError(
       `Unsupported "new" expression: ${expression.expression.getText(sourceFile)}`,
+      {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+      },
     );
   } else if (ts.isCallExpression(expression)) {
     if (macro) {
@@ -383,10 +434,26 @@ export function evaluate(
     const callee = expression.expression.getText(sourceFile);
     // @ts-expect-error
     if (MACRO_FUNCTIONS.includes(callee)) {
-      throw new Error(`Function "${callee}" is only allowed in macro mode`);
+      throw new ConfTSError(
+        `Function "${callee}" is only allowed in macro mode`,
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
+      );
     } else {
-      throw new Error(
+      throw new ConfTSError(
         `Unsupported call expression: ${expression.getText(sourceFile)}`,
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
       );
     }
   } else if (ts.isParenthesizedExpression(expression)) {
@@ -401,7 +468,10 @@ export function evaluate(
       context,
     );
   } else if (ts.isRegularExpressionLiteral(expression)) {
-    throw new Error('Unsupported type: RegExp');
+    throw new ConfTSError('Unsupported type: RegExp', {
+      file: sourceFile.fileName,
+      ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+    });
   } else if (ts.isSatisfiesExpression(expression)) {
     return evaluate(
       expression.expression,
@@ -446,8 +516,12 @@ export function evaluate(
           context,
         );
   } else {
-    throw new Error(
+    throw new ConfTSError(
       `Unsupported syntax kind: ${ts.SyntaxKind[expression.kind]}`,
+      {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(sourceFile, expression.getStart()),
+      },
     );
   }
 }
