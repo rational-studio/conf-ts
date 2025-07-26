@@ -1,3 +1,4 @@
+import { sep } from 'path';
 import ts from 'typescript';
 import { stringify as yamlStringify } from 'yaml';
 
@@ -54,7 +55,7 @@ function _compile(
   const compilerOptions = ts.parseJsonConfigFileContent(
     configFile.config,
     ts.sys,
-    tsConfigPath.substring(0, tsConfigPath.lastIndexOf('/')),
+    tsConfigPath.substring(0, tsConfigPath.lastIndexOf(sep)),
   );
 
   const program = ts.createProgram(
