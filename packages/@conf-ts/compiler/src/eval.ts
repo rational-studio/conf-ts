@@ -182,20 +182,27 @@ export function evaluate(
       }
 
       if (resolvedSymbol.valueDeclaration) {
-        if (
-          ts.isVariableDeclaration(resolvedSymbol.valueDeclaration) &&
-          resolvedSymbol.valueDeclaration.initializer
-        ) {
-          return evaluate(
-            resolvedSymbol.valueDeclaration.initializer,
-            resolvedSymbol.valueDeclaration.getSourceFile(),
-            typeChecker,
-            enumMap,
-            macroImportsMap,
-            macro,
-            evaluatedFiles,
-            context,
-          );
+        if (ts.isVariableDeclaration(resolvedSymbol.valueDeclaration)) {
+          const declarationList = resolvedSymbol.valueDeclaration.parent;
+          if (!(declarationList.flags & ts.NodeFlags.Const)) {
+            const kind =
+              declarationList.flags & ts.NodeFlags.Let ? 'let' : 'var';
+            throw new Error(
+              `Failed to evaluate variable "${expression.text}". Only 'const' declarations are supported, but it was declared with '${kind}'.`,
+            );
+          }
+          if (resolvedSymbol.valueDeclaration.initializer) {
+            return evaluate(
+              resolvedSymbol.valueDeclaration.initializer,
+              resolvedSymbol.valueDeclaration.getSourceFile(),
+              typeChecker,
+              enumMap,
+              macroImportsMap,
+              macro,
+              evaluatedFiles,
+              context,
+            );
+          }
         } else if (ts.isEnumMember(resolvedSymbol.valueDeclaration)) {
           const enumName = resolvedSymbol.valueDeclaration.parent.name.getText(
             resolvedSymbol.valueDeclaration.getSourceFile(),
