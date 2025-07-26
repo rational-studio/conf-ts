@@ -3,6 +3,8 @@ import ts from 'typescript';
 import { MACRO_FUNCTIONS } from './constants';
 import { evaluateMacro } from './macro';
 
+const macroModuleSpecifiers = ["'@conf-ts/macro'", '"@conf-ts/macro"'];
+
 export function evaluate(
   expression: ts.Expression,
   sourceFile: ts.SourceFile,
@@ -21,7 +23,7 @@ export function evaluate(
       sourceFile.statements.forEach(statement => {
         if (ts.isImportDeclaration(statement)) {
           const moduleSpecifier = statement.moduleSpecifier.getText(sourceFile);
-          if (moduleSpecifier === "'@conf-ts/macro'") {
+          if (macroModuleSpecifiers.includes(moduleSpecifier)) {
             if (
               statement.importClause &&
               statement.importClause.namedBindings
