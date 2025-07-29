@@ -5,3 +5,7 @@ export const Boolean = global.Boolean;
 export function arrayMap<T, U>(arr: T[], callback: (item: T) => U): U[] {
   return arr.map(callback);
 }
+
+export function env(key: string): string | undefined {
+  return process.env[key];
+}

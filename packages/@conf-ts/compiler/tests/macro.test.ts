@@ -38,4 +38,10 @@ describe('Macro Test', () => {
   it('should handle ternary operator in macro mode', () => {
     assertMacroOutput('ternary');
   });
+
+  it('should handle env macro for reading environment variables', () => {
+    process.env.CONF_TS_FOO = 'foo';
+    process.env.CONF_TS_BAR = 'bar';
+    assertMacroOutput('env');
+  });
 });

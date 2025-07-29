@@ -139,6 +139,31 @@ export default {
 }
 ```
 
+#### `env(key)`
+
+This macro reads an environment variable at compile time and inlines its value into the configuration. If the environment variable is not set, it will be `undefined`.
+
+**Examples:**
+
+```ts
+import { env } from '@conf-ts/macro';
+
+export default {
+  nodeEnv: env('NODE_ENV'),
+  port: env('PORT') || 3000,
+};
+```
+
+When running the compiler with `NODE_ENV=production` and `PORT=8080`:
+
+**JSON Output:**
+```json
+{
+  "nodeEnv": "production",
+  "port": 8080
+}
+```
+
 ## Development
 
 ### Running Tests

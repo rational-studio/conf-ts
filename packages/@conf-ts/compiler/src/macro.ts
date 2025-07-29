@@ -19,6 +19,66 @@ const ARRAY_MACRO_FUNCTIONS = [
   { name: 'arrayMap', argLength: 2 },
 ] satisfies MacroFunction[];
 
+const ENV_MACRO_FUNCTIONS = [
+  { name: 'env', argLength: 1 },
+] satisfies MacroFunction[];
+
+function evaluateEnv(
+  expression: ts.CallExpression,
+  sourceFile: ts.SourceFile,
+  typeChecker: ts.TypeChecker,
+  enumMap: { [filePath: string]: { [key: string]: any } },
+  macroImportsMap: { [filePath: string]: Set<string> },
+  evaluatedFiles: Set<string>,
+) {
+  const callee = expression.expression.getText(sourceFile);
+  const macroFunction = ENV_MACRO_FUNCTIONS.find(
+    macro => macro.name === callee,
+  );
+  if (
+    macroFunction &&
+    expression.arguments.length === macroFunction.argLength
+  ) {
+    // Check if the function is properly imported from @conf-ts/macro
+    const allowedMacroImports =
+      macroImportsMap[sourceFile.fileName] || new Set();
+    if (!allowedMacroImports.has(callee)) {
+      throw new ConfTSError(
+        `Macro function '${callee}' must be imported from '@conf-ts/macro' to use in macro mode`,
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
+      );
+    }
+
+    const argument = evaluate(
+      expression.arguments[0],
+      sourceFile,
+      typeChecker,
+      enumMap,
+      macroImportsMap,
+      false, // No macros in macros
+      evaluatedFiles,
+    );
+    if (typeof argument !== 'string') {
+      throw new ConfTSError('env macro argument must be a string', {
+        file: sourceFile.fileName,
+        ...ts.getLineAndCharacterOfPosition(
+          sourceFile,
+          expression.arguments[0].getStart(),
+        ),
+      });
+    }
+    return process.env[argument];
+  }
+  return undefined;
+}
+
+
 function evaluateTypeCasting(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -224,6 +284,17 @@ export function evaluateMacro(
     return result;
   }
   result = evaluateArrayMap(
+    expression,
+    sourceFile,
+    typeChecker,
+    enumMap,
+    macroImportsMap,
+    evaluatedFiles,
+  );
+  if (result !== undefined) {
+    return result;
+  }
+  result = evaluateEnv(
     expression,
     sourceFile,
     typeChecker,
