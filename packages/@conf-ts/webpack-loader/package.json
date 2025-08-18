@@ -12,8 +12,8 @@
   },
   "devDependencies": {
     "@types/webpack": "^5.28.5",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "webpack": "^5.100.2"
+    "webpack": "^5.101.3"
   }
 }

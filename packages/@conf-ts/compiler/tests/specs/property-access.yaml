@@ -1,2 +1,14 @@
 host: localhost
 port: 8080
+test-1:
+  cool: 123
+  awesome: true
+test-2:
+  cool: 456
+  awesome: false
+super:
+  cool: 789
+  awesome: true
+test-super:
+  cool: 101112
+  awesome: false
