@@ -76,7 +76,25 @@ export function evaluate(
     const obj: { [key: string]: any } = {};
     expression.properties.forEach(prop => {
       if (ts.isPropertyAssignment(prop)) {
-        const name = prop.name.getText(sourceFile);
+        let name: string;
+        if (ts.isComputedPropertyName(prop.name)) {
+          name = evaluate(
+            prop.name.expression,
+            sourceFile,
+            typeChecker,
+            enumMap,
+            macroImportsMap,
+            macro,
+            evaluatedFiles,
+            context,
+          );
+        } else if (ts.isIdentifier(prop.name)) {
+          name = prop.name.text;
+        } else if (ts.isStringLiteral(prop.name)) {
+          name = prop.name.text;
+        } else {
+          name = prop.name.getText(sourceFile);
+        }
         obj[name] = evaluate(
           prop.initializer,
           sourceFile,
