@@ -1,205 +1,175 @@
-# conf-ts
+## conf-ts
 
-A command-line tool to compile a subset of TypeScript files into JSON or YAML, extracting configuration or data.
+Compile TypeScript-based configs to JSON or YAML. Keep configs type-safe, composable, and multi-file — then emit plain data for production.
 
-## Features
+### Try it now
 
-- Compiles TypeScript files containing object literals, arrays, strings, numbers, booleans, and null into a single JSON or YAML output.
-- Supports enums (numeric and string-based) and their initializers.
-- Handles constant references and property access expressions.
-- Processes object and array spread syntax.
-- Supports multi-file projects, allowing you to organize your configuration across multiple TypeScript files.
+- **Playground**: [conf-ts.rational.studio](https://conf-ts.rational.studio)
+
+## Why conf-ts
+
+- **Type-safe configs**: Author in TypeScript with enums, constants, spreads, and expressions.
+- **Deterministic output**: Produces JSON/YAML with no runtime TypeScript.
+- **Macro mode (opt-in)**: Compile-time helpers for casting, array transforms, and env injection.
+- **Multi-file + path aliases**: Works across files and honors `tsconfig.json` path aliases.
+
+## Packages in this monorepo
+
+- `@conf-ts/cli`: CLI to compile `.ts`/`.conf.ts` to JSON/YAML
+- `@conf-ts/compiler`: Core compiler APIs (`compile`, `compileInMemory`)
+- `@conf-ts/macro`: Macro functions available in macro mode
+- `@conf-ts/webpack-loader`: Webpack loader that emits generated JSON/YAML files
 
 ## Installation
 
 ```bash
-pnpm install @conf-ts/cli
+pnpm add -D @conf-ts/cli
+# or
+npm i -D @conf-ts/cli
+# or
+yarn add -D @conf-ts/cli
 ```
 
-## Usage
-
-To compile a TypeScript file to JSON or YAML, run the following command:
+## CLI usage
 
 ```bash
 conf-ts <fileEntry>
+
+# JSON (default)
+conf-ts src/config.conf.ts
+
+# YAML
+conf-ts -f yaml src/config.conf.ts
+
+# Macro mode
+conf-ts --macro src/config.conf.ts
 ```
 
-You can specify the output format using the `--format` or `-f` option. The default format is JSON.
+The compiled output is printed to stdout.
 
-For example, to output JSON:
+## Macro mode
 
-```bash
-conf-ts src/config.ts
-```
+Enable with `--macro`. All macros must be imported from `@conf-ts/macro`.
 
-To output YAML:
-
-```bash
-conf-ts -f yaml src/config.ts
-```
-
-The compiled output will be printed to `stdout`.
-
-## Macro Mode
-
-The `--macro` flag enables a special mode where certain macro functions can be used within your TypeScript configuration files. These macros are evaluated at compile time and allow for dynamic transformations or type conversions that are not typically possible with static TypeScript evaluation.
-
-To enable macro mode, use the `--macro` flag:
-
-```bash
-conf-ts --macro src/config.ts
-```
-
-### Available Macros
-
-All macros must be imported from `'@conf-ts/macro'`.
-
-#### Type Casting Macros: `String()`, `Number()`, `Boolean()`
-
-These macros allow you to explicitly cast values to `string`, `number`, or `boolean` types during compilation. This can be useful for ensuring the correct data type in your output configuration, especially when dealing with values that might otherwise be inferred differently.
-
-**Examples:**
+### Type casting: `String()`, `Number()`, `Boolean()`
 
 ```ts
 import { String, Number, Boolean } from '@conf-ts/macro';
 
-const myNumber = 123;
-const myString = "true";
-
 export default {
-  numberAsString: String(myNumber),    // "123"
-  stringAsNumber: Number(myString),    // 1
-  numberAsBoolean: Boolean(myNumber),  // true
-  zeroAsBoolean: Boolean(0),           // false
-};
-```
-
-**JSON Output:**
-```json
-{
-  "numberAsString": "123",
-  "stringAsNumber": 1,
-  "numberAsBoolean": true,
-  "zeroAsBoolean": false
+  asString: String(123),  // "123"
+  asNumber: Number('1'),  // 1
+  asBoolean: Boolean(0),  // false
 }
 ```
 
-#### `arrayMap(array, callback)`
+### Arrays: `arrayMap(array, item => expr)`
 
-This macro mimics `Array.prototype.map` but operates at compile time. It allows you to transform elements of an array based on a provided callback function.
-
-**Constraints on the Callback:**
-
-- The `callback` must be an arrow function.
-- It must have exactly one parameter.
-- Its body must be a single return statement.
-- The callback can only use its parameter and literal values (e.g., numbers, strings, booleans). It cannot reference external variables, other functions, or complex expressions beyond simple arithmetic or string concatenation with its parameter.
-
-**Examples:**
+Constraints:
+- Callback must be an arrow function with exactly one parameter
+- Body must be a single return expression (or expression body)
+- Only the parameter and literals can be referenced
 
 ```ts
 import { arrayMap } from '@conf-ts/macro';
 
-const numbers = [1, 2, 3, 4, 5, 6];
-
+const nums = [1, 2, 3, 4];
 export default {
-  doubledAndFiltered: arrayMap(numbers, x => x % 2 === 0 ? x * 2 : x),
-  asString: arrayMap(numbers, x => `${x}`),
-  categorized: arrayMap(numbers, x => x > 3 ? 'large' : 'small'),
-};
-```
-
-**JSON Output:**
-```json
-{
-  "doubledAndFiltered": [
-    1,
-    4,
-    3,
-    8,
-    5,
-    12
-  ],
-  "asString": [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6"
-  ],
-  "categorized": [
-    "small",
-    "small",
-    "small",
-    "large",
-    "large",
-    "large"
-  ]
+  doubled: arrayMap(nums, x => x * 2),
 }
 ```
 
-#### `env(key)`
-
-This macro reads an environment variable at compile time and inlines its value into the configuration. If the environment variable is not set, it will be `undefined`.
-
-**Examples:**
+### Environment: `env(key)`
 
 ```ts
 import { env } from '@conf-ts/macro';
 
 export default {
   nodeEnv: env('NODE_ENV'),
-  port: env('PORT') || 3000,
-};
-```
-
-When running the compiler with `NODE_ENV=production` and `PORT=8080`:
-
-**JSON Output:**
-```json
-{
-  "nodeEnv": "production",
-  "port": 8080
+  port: Number(env('PORT') ?? '3000'),
 }
 ```
 
-## Development
+## Programmatic API
 
-### Running Tests
+### Node (compile files on disk)
 
-```bash
-pnpm test
+```ts
+import { compile } from '@conf-ts/compiler';
+
+const { output, dependencies } = compile('path/to/index.conf.ts', 'json', false);
+// output: string (JSON or YAML)
+// dependencies: string[] of files that were evaluated
 ```
 
-### Building the Project
+### Browser / in-memory (perfect for playgrounds)
+
+```ts
+import { compileInMemory } from '@conf-ts/compiler';
+
+const files = {
+  '/index.conf.ts': "export default { foo: 'bar' }",
+};
+
+const { output, dependencies } = compileInMemory(files, '/index.conf.ts', 'json', false);
+```
+
+## Webpack loader
+
+The loader compiles a `.conf.ts` (or any TS entry) and writes a generated file next to it.
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.conf\.ts$/,
+        use: [
+          {
+            loader: '@conf-ts/webpack-loader',
+            options: {
+              format: 'json',
+              extensionToRemove: '.conf.ts',
+              name: '[name].generated.json',
+              logDependencies: false,
+            },
+          },
+        ],
+      },
+    ],
+  },
+}
+```
+
+## Supported TypeScript
+
+- Literals: string, number, boolean, null
+- String template literals
+- Object/array literals, spreads, shorthand properties
+- Enums (string and numeric)
+- Property access (including enums)
+- Binary operators (+ - * / % comparisons)
+- Unary prefix (+ - ! ~)
+- Conditional (ternary)
+- Parenthesized and `as`/`satisfies` expressions
+
+## Not supported
+
+- Functions (arrow/function expressions) in values
+- `new Date()` and other `new` expressions
+- Regular expressions
+- `let`/`var` for referenced variables (only `const` is allowed)
+
+## Scripts
 
 ```bash
 pnpm build
+pnpm test
+pnpm format
 ```
 
-## Supported TypeScript Features
+## License
 
-This tool supports a subset of TypeScript syntax relevant for defining data structures and configurations:
-
-- **Literals:** String, Number, Boolean, and Null literals.
-- **String Template Literals:** For dynamic string construction (e.g., ``Hello, ${name}!``).
-- **Object Literals:** With property assignments, shorthand properties (e.g., `{ myVar }`), and spread assignments (e.g., `{ ...obj }`).
-- **Array Literals:** Including spread elements (e.g., `[ ...arr ]`).
-- **Enum Declarations:** Both numeric and string-based enums.
-- **Variable Declarations:** Primarily for constants with initializers.
-- **Property Access Expressions:** For accessing enum members or properties of evaluated objects (e.g., `myObject.property`, `MyEnum.Member`).
-- **Binary Expressions:** Standard arithmetic (`+`, `-`, `*`, `/`, `%`) and comparison (`>`, `<`, `>=`, `<=`, `==`, `===`, `!=`, `!==`) operations.
-- **Unary Prefix Expressions:** Such as `+`, `-`, `!`, `~`.
-- **Conditional (Ternary) Expressions:** (e.g., `condition ? valueIfTrue : valueIfFalse`).
-- **Parenthesized Expressions:** For controlling order of operations (e.g., `(a + b) * c`).
-
-## Unsupported TypeScript Features
-
-The following TypeScript features are explicitly **not** supported and will result in an error:
-
-- Functions (Arrow functions, Function expressions)
-- Date objects (`new Date()`)
-- Regular Expressions
-- Any other complex types or language constructs not listed under "Supported TypeScript Features"
+MIT
 
