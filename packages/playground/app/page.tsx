@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-yaml';
+import 'prismjs/themes/prism.css';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -26,6 +30,8 @@ export default { greeting: 'hello world', nested: { a: 1, b: 2 } } as const;
   const [macro, setMacro] = useState<boolean>(false);
   const [result, setResult] = useState<CompileResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [highlighted, setHighlighted] = useState<string>('');
+  const [copied, setCopied] = useState<boolean>(false);
   const debounceTimer = useRef<number | null>(null);
   const editorRef = useRef<any>(null);
 
@@ -52,9 +58,14 @@ export default { greeting: 'hello world', nested: { a: 1, b: 2 } } as const;
       const { compileInMemory } = await import('@conf-ts/compiler/browser');
       const compiled = compileInMemory(files, '/index.conf.ts', format, macro);
       setResult(compiled);
+      // Client-side highlight using Prism
+      const grammar = Prism.languages[format === 'json' ? 'json' : 'yaml'];
+      const html = Prism.highlight(compiled.output, grammar, format);
+      setHighlighted(html);
     } catch (e: any) {
       setResult(null);
       setError(e?.toString?.() ?? String(e));
+      setHighlighted('');
     }
   }, [files, format, macro]);
 
@@ -77,49 +88,85 @@ export default { greeting: 'hello world', nested: { a: 1, b: 2 } } as const;
     };
   }, [input, format, macro, compile]);
 
-  const handleEditorMount = useCallback((editor: any, monaco: any) => {
-    editorRef.current = editor;
-    // Format on mount
-    editor.getAction('editor.action.formatDocument')?.run().catch(() => {});
-    // Cmd/Ctrl+S to format
-    const formatKeybinding = monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS;
-    editor.addCommand(formatKeybinding, () => {
-      editor.getAction('editor.action.formatDocument')?.run();
-    });
-  }, []);
+  const handleCopyOutput = useCallback(async () => {
+    if (!result?.output && !error) return;
+    try {
+      await navigator.clipboard.writeText(result?.output ?? error ?? '');
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore
+    }
+  }, [result, error]);
 
   return (
-    <main className="mx-auto max-w-6xl p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">conf-ts Playground</h1>
+    <main className="mx-auto max-w-7xl px-6 py-10 space-y-6">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <label className="text-sm">Format</label>
-          <select
-            value={format}
-            onChange={(e) => setFormat(e.target.value as 'json' | 'yaml')}
-            className="rounded border px-2 py-1"
+          
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">playground.conf.ts</h1>
+            <p className="text-sm text-neutral-500">Compile .conf.ts to JSON/YAML in your browser</p>
+          </div>
+          <span className="ml-2 rounded-full bg-neutral-900/5 px-2.5 py-0.5 text-xs text-neutral-600 ring-1 ring-inset ring-neutral-900/10">beta</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-600">Format</span>
+            <div className="inline-flex h-9 rounded-lg border bg-white p-0.5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setFormat('json')}
+                aria-pressed={format === 'json'}
+                className={`h-full px-3 text-sm rounded-md transition-colors ${format === 'json' ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-neutral-100'}`}
+              >
+                JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat('yaml')}
+                aria-pressed={format === 'yaml'}
+                className={`h-full px-3 text-sm rounded-md transition-colors ${format === 'yaml' ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-neutral-100'}`}
+              >
+                YAML
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyOutput}
+            disabled={!result?.output && !error}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border bg-white px-3 text-sm text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50 disabled:opacity-50"
           >
-            <option value="json">JSON</option>
-            <option value="yaml">YAML</option>
-          </select>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={macro}
-              onChange={e => setMacro(e.target.checked)}
-            />
-            Macro mode
-          </label>
-          <span className="text-xs text-neutral-500 hidden md:inline">Press ⌘/Ctrl+S to format</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            {copied ? 'Copied' : 'Copy output'}
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-600">Macro</span>
+            <button
+              type="button"
+              onClick={() => setMacro(v => !v)}
+              aria-pressed={macro}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${macro ? 'bg-neutral-900' : 'bg-neutral-300'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${macro ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className="sr-only">Toggle macro mode</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="flex min-h-[55vh] flex-col gap-2">
-          <label className="text-sm font-medium">/index.conf.ts</label>
-          <div className="min-h-[55vh] rounded border overflow-hidden">
+        <div className="relative grid h-[75vh] grid-rows-[auto_1fr]">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-neutral-700">/index.conf.ts</label>
+          </div>
+          <div className="row-start-2 min-h-0 overflow-hidden rounded-xl border bg-white shadow-sm ring-1 ring-black/5">
             <MonacoEditor
-              height="55vh"
+              height="100%"
               defaultLanguage="typescript"
               path="/index.conf.ts"
               theme="vs-dark"
@@ -132,40 +179,26 @@ export default { greeting: 'hello world', nested: { a: 1, b: 2 } } as const;
                 wordWrap: 'on',
               }}
               onChange={(value) => setInput(value ?? '')}
-              onMount={handleEditorMount}
             />
           </div>
         </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Output</label>
+        <div className="relative grid h-[75vh] grid-rows-[auto_1fr]">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-neutral-700">Output</label>
+          </div>
           {error ? (
-            <pre className="h-[55vh] overflow-auto rounded border bg-white p-3 text-sm text-red-600 whitespace-pre-wrap">
+            <pre className="row-start-2 min-h-0 h-full whitespace-pre-wrap overflow-auto rounded-xl border bg-white p-3 text-sm text-red-600 shadow-sm ring-1 ring-black/5">
               {error}
             </pre>
           ) : (
-            <div className="min-h-[55vh] rounded border overflow-hidden">
-              <MonacoEditor
-                key={`output-${format}`}
-                height="55vh"
-                language={format === 'json' ? 'json' : 'yaml'}
-                theme="light"
-                value={result?.output ?? ''}
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  scrollBeyondLastLine: false,
-                  wordWrap: 'on',
-                }}
+            <pre className="row-start-2 min-h-0 h-full overflow-auto rounded-xl border bg-white p-3 text-sm shadow-sm ring-1 ring-black/5 language-json" tabIndex={0}>
+              {/* eslint-disable-next-line react/no-danger */}
+              <code
+                className={format === 'json' ? 'language-json' : 'language-yaml'}
+                dangerouslySetInnerHTML={{ __html: highlighted }}
               />
-            </div>
+            </pre>
           )}
-          {result?.dependencies?.length ? (
-            <div className="text-xs text-neutral-500">
-              Dependencies: {result.dependencies.join(', ')}
-            </div>
-          ) : null}
         </div>
       </section>
     </main>
