@@ -7,5 +7,8 @@ export function arrayMap<T, U>(arr: T[], callback: (item: T) => U): U[] {
 }
 
 export function env(key: string): string | undefined {
-  return process.env[key];
+  // Support both Node and browser environments
+  // eslint-disable-next-line no-undef
+  const proc: any = typeof process !== 'undefined' ? process : undefined;
+  return proc?.env?.[key];
 }

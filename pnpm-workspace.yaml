@@ -1,6 +1,7 @@
 packages:
   - packages/@conf-ts/*
   - packages/@conf-ts/webpack-loader
+  - packages/playground
 
 onlyBuiltDependencies:
   - esbuild

@@ -485,6 +485,18 @@ export function evaluate(
       evaluatedFiles,
       context,
     );
+  } else if (ts.isAsExpression(expression)) {
+    // Ignore type assertions like `value as T` and `as const`, return the evaluated value
+    return evaluate(
+      expression.expression,
+      sourceFile,
+      typeChecker,
+      enumMap,
+      macroImportsMap,
+      macro,
+      evaluatedFiles,
+      context,
+    );
   } else if (ts.isRegularExpressionLiteral(expression)) {
     throw new ConfTSError('Unsupported type: RegExp', {
       file: sourceFile.fileName,

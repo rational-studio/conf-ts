@@ -58,6 +58,10 @@ describe('Spec Test', () => {
     assertSpecOutput('satisfies');
   });
 
+  it('should handle as-expressions (type assertions and as const)', () => {
+    assertSpecOutput('as-expression');
+  });
+
   it('should handle property access in object constants', () => {
     assertSpecOutput('property-access');
   });
@@ -65,7 +69,7 @@ describe('Spec Test', () => {
   it('should throw an error for let/var variables', () => {
     assertSpecError(
       'unsupported-let-var',
-      "Failed to evaluate variable \"c\". Only 'const' declarations are supported, but it was declared with 'let'."
+      "Failed to evaluate variable \"c\". Only 'const' declarations are supported, but it was declared with 'let'.",
     );
   });
 });

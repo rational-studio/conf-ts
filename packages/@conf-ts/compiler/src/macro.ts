@@ -73,11 +73,13 @@ function evaluateEnv(
         ),
       });
     }
-    return process.env[argument];
+    // Support both Node and browser environments
+    // eslint-disable-next-line no-undef
+    const proc: any = typeof process !== 'undefined' ? process : undefined;
+    return proc?.env?.[argument];
   }
   return undefined;
 }
-
 
 function evaluateTypeCasting(
   expression: ts.CallExpression,
