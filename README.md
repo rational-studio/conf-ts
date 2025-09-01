@@ -68,7 +68,7 @@ export default {
 Constraints:
 - Callback must be an arrow function with exactly one parameter
 - Body must be a single return expression (or expression body)
-- Only the parameter and literals can be referenced
+- The callback parameter can be used in property access chains (e.g., `item.name`) and object keys (e.g., `{ [item.id]: item.value }`).
 
 ```ts
 import { arrayMap } from '@conf-ts/macro';

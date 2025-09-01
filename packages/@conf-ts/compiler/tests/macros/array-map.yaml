@@ -7,20 +7,20 @@ mapToString:
   - "2"
   - "3"
 mapNames:
-  - "Alice"
-  - "Bob"
-  - "Charlie"
-  - "David"
-  - "Eve"
+  - Alice
+  - Bob
+  - Charlie
+  - David
+  - Eve
 alternateObjects:
   - id: 1
-    name: "Alice"
+    name: Alice
   - id: 2
-    name: "Bob"
+    name: Bob
   - id: 3
-    name: "Charlie"
+    name: Charlie
     isAdmin: true
   - id: 4
-    name: "David"
+    name: David
   - id: 5
-    name: "Eve"
+    name: Eve

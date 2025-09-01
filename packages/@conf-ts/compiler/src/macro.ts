@@ -199,7 +199,32 @@ function evaluateArrayMap(
     // Helper to check if an identifier is allowed (either the param or a literal)
     function isAllowedIdentifier(node: ts.Node): boolean {
       if (ts.isIdentifier(node)) {
-        return node.text === paramName;
+        if (node.text === paramName) {
+          return true;
+        }
+        if (
+          node.parent &&
+          ts.isPropertyAccessExpression(node.parent) &&
+          node.parent.name === node
+        ) {
+          let expr = node.parent.expression;
+          // allow deep property access
+          while (ts.isPropertyAccessExpression(expr)) {
+            expr = expr.expression;
+          }
+          if (ts.isIdentifier(expr) && expr.text === paramName) {
+            return true;
+          }
+        }
+        // allow object keys
+        if (
+          node.parent &&
+          ts.isPropertyAssignment(node.parent) &&
+          node.parent.name === node
+        ) {
+          return true;
+        }
+        return false;
       }
       return true;
     }
