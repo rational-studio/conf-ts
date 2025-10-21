@@ -6,6 +6,10 @@ export function arrayMap<T, U>(arr: T[], callback: (item: T) => U): U[] {
   return arr.map(callback);
 }
 
+export function arrayFilter<T>(arr: T[], predicate: (item: T) => boolean): T[] {
+  return arr.filter(predicate);
+}
+
 export function env(key: string): string | undefined {
   // Support both Node and browser environments
   // eslint-disable-next-line no-undef

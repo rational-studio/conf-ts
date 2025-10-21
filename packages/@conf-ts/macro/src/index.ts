@@ -18,6 +18,13 @@ export function arrayMap<T, U>(array: T[], callback: (item: T) => U): U[] {
   return array.map(callback);
 }
 
+export function arrayFilter<T>(
+  array: T[],
+  predicate: (item: T) => boolean,
+): T[] {
+  return array.filter(predicate);
+}
+
 export function env(key: string): string | undefined {
   return process.env[key];
 }

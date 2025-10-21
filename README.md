@@ -79,6 +79,23 @@ export default {
 }
 ```
 
+### Arrays: `arrayFilter(array, item => predicate)`
+
+Constraints:
+- Callback must be an arrow function with exactly one parameter
+- Body must be a single return expression (or expression body)
+- The callback parameter can be used in property access chains (e.g., `item.name`) and object keys (e.g., `{ [item.id]: item.value }`).
+- The returned expression is coerced to boolean to decide inclusion
+
+```ts
+import { arrayFilter } from '@conf-ts/macro';
+
+const nums = [1, 2, 3, 4];
+export default {
+  evens: arrayFilter(nums, x => x % 2 === 0),
+}
+```
+
 ### Environment: `env(key)`
 
 ```ts

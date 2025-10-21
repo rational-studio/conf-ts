@@ -12,10 +12,21 @@ describe('Macro Test', () => {
     assertMacroOutput('array-map');
   });
 
+  it('should handle arrayFilter macro for filtering arrays', () => {
+    assertMacroOutput('array-filter');
+  });
+
   it('should throw error when arrayMap callback is a function expression', () => {
     assertMacroError(
       'invalid-array-map-callback',
       'arrayMap: callback must be an arrow function',
+    );
+  });
+
+  it('should throw error when arrayFilter callback is a function expression', () => {
+    assertMacroError(
+      'invalid-array-filter-callback',
+      'arrayFilter: callback must be an arrow function',
     );
   });
 
