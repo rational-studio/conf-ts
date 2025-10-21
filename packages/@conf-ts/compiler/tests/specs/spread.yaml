@@ -37,3 +37,10 @@ override:
   c: 40
   d: 50
   e: 60
+spreaded:
+  rest:
+    c: 3
+    d:
+      e: 4
+      f: 5
+  g: 100

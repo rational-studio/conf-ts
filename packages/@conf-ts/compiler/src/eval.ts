@@ -130,6 +130,90 @@ export function evaluate(
               evaluatedFiles,
               context,
             );
+          } else if (
+            resolvedSymbol.valueDeclaration &&
+            ts.isBindingElement(resolvedSymbol.valueDeclaration)
+          ) {
+            const binding = resolvedSymbol.valueDeclaration;
+            const pattern = binding.parent;
+            const varDeclParent = pattern.parent;
+            if (
+              ts.isObjectBindingPattern(pattern) &&
+              ts.isVariableDeclaration(varDeclParent) &&
+              varDeclParent.initializer
+            ) {
+              const sourceObj = evaluate(
+                varDeclParent.initializer,
+                varDeclParent.getSourceFile(),
+                typeChecker,
+                enumMap,
+                macroImportsMap,
+                macro,
+                evaluatedFiles,
+                context,
+              );
+
+              if (binding.dotDotDotToken) {
+                const keysToRemove = new Set<string>();
+                for (const el of pattern.elements) {
+                  if (el === binding) continue;
+                  if (el.dotDotDotToken) continue;
+                  let keyName: string;
+                  if (el.propertyName) {
+                    if (ts.isIdentifier(el.propertyName)) {
+                      keyName = el.propertyName.text;
+                    } else if (ts.isStringLiteral(el.propertyName)) {
+                      keyName = el.propertyName.text;
+                    } else {
+                      keyName = el.propertyName.getText(
+                        varDeclParent.getSourceFile(),
+                      );
+                    }
+                  } else if (ts.isIdentifier(el.name)) {
+                    keyName = el.name.text;
+                  } else {
+                    keyName = el.name.getText(varDeclParent.getSourceFile());
+                  }
+                  keysToRemove.add(keyName);
+                }
+                const restObj: any = {};
+                for (const key of Object.keys(sourceObj || {})) {
+                  if (!keysToRemove.has(key)) {
+                    restObj[key] = sourceObj[key];
+                  }
+                }
+                obj[name] = restObj;
+              } else {
+                let keyName: string;
+                if (binding.propertyName) {
+                  if (ts.isIdentifier(binding.propertyName)) {
+                    keyName = binding.propertyName.text;
+                  } else if (ts.isStringLiteral(binding.propertyName)) {
+                    keyName = binding.propertyName.text;
+                  } else {
+                    keyName = binding.propertyName.getText(
+                      varDeclParent.getSourceFile(),
+                    );
+                  }
+                } else if (ts.isIdentifier(binding.name)) {
+                  keyName = binding.name.text;
+                } else {
+                  keyName = binding.name.getText(varDeclParent.getSourceFile());
+                }
+                obj[name] = sourceObj ? sourceObj[keyName] : undefined;
+              }
+            } else {
+              throw new ConfTSError(
+                `Could not resolve shorthand property '${name}' because its declaration is not a variable or has no initializer.`,
+                {
+                  file: sourceFile.fileName,
+                  ...ts.getLineAndCharacterOfPosition(
+                    sourceFile,
+                    prop.getStart(),
+                  ),
+                },
+              );
+            }
           } else {
             throw new ConfTSError(
               `Could not resolve shorthand property '${name}' because its declaration is not a variable or has no initializer.`,
@@ -239,6 +323,76 @@ export function evaluate(
               evaluatedFiles,
               context,
             );
+          }
+        } else if (ts.isBindingElement(resolvedSymbol.valueDeclaration)) {
+          const binding = resolvedSymbol.valueDeclaration;
+          const pattern = binding.parent;
+          const varDeclParent = pattern.parent;
+          if (
+            ts.isObjectBindingPattern(pattern) &&
+            ts.isVariableDeclaration(varDeclParent) &&
+            varDeclParent.initializer
+          ) {
+            const sourceObj = evaluate(
+              varDeclParent.initializer,
+              varDeclParent.getSourceFile(),
+              typeChecker,
+              enumMap,
+              macroImportsMap,
+              macro,
+              evaluatedFiles,
+              context,
+            );
+
+            if (binding.dotDotDotToken) {
+              const keysToRemove = new Set<string>();
+              for (const el of pattern.elements) {
+                if (el === binding) continue;
+                if (el.dotDotDotToken) continue;
+                let keyName: string;
+                if (el.propertyName) {
+                  if (ts.isIdentifier(el.propertyName)) {
+                    keyName = el.propertyName.text;
+                  } else if (ts.isStringLiteral(el.propertyName)) {
+                    keyName = el.propertyName.text;
+                  } else {
+                    keyName = el.propertyName.getText(
+                      varDeclParent.getSourceFile(),
+                    );
+                  }
+                } else if (ts.isIdentifier(el.name)) {
+                  keyName = el.name.text;
+                } else {
+                  keyName = el.name.getText(varDeclParent.getSourceFile());
+                }
+                keysToRemove.add(keyName);
+              }
+              const restObj: any = {};
+              for (const key of Object.keys(sourceObj || {})) {
+                if (!keysToRemove.has(key)) {
+                  restObj[key] = sourceObj[key];
+                }
+              }
+              return restObj;
+            } else {
+              let keyName: string;
+              if (binding.propertyName) {
+                if (ts.isIdentifier(binding.propertyName)) {
+                  keyName = binding.propertyName.text;
+                } else if (ts.isStringLiteral(binding.propertyName)) {
+                  keyName = binding.propertyName.text;
+                } else {
+                  keyName = binding.propertyName.getText(
+                    varDeclParent.getSourceFile(),
+                  );
+                }
+              } else if (ts.isIdentifier(binding.name)) {
+                keyName = binding.name.text;
+              } else {
+                keyName = binding.name.getText(varDeclParent.getSourceFile());
+              }
+              return sourceObj ? sourceObj[keyName] : undefined;
+            }
           }
         } else if (ts.isEnumMember(resolvedSymbol.valueDeclaration)) {
           const enumName = resolvedSymbol.valueDeclaration.parent.name.getText(
