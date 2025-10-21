@@ -19,6 +19,6 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
     "@types/webpack-env": "^1.18.8",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
