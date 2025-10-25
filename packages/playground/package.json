@@ -11,14 +11,14 @@
     "@conf-ts/compiler": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.54.0",
-    "next": "^15.5.6",
+    "next": "^16.0.0",
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.15"
+    "tailwindcss": "^4.1.16"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.15",
+    "@tailwindcss/postcss": "^4.1.16",
     "@types/prismjs": "^1.26.5",
     "@types/react": "19.2.2",
     "autoprefixer": "^10.4.21",
