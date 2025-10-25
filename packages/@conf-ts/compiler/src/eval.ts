@@ -699,6 +699,55 @@ export function evaluate(
           evaluatedFiles,
           context,
         );
+  } else if (ts.isNonNullExpression(expression)) {
+    const value = evaluate(
+      expression.expression,
+      sourceFile,
+      typeChecker,
+      enumMap,
+      macroImportsMap,
+      macro,
+      evaluatedFiles,
+      context,
+    );
+    const type = typeChecker.getTypeAtLocation(expression.expression);
+    let typeIsStrictNullish = false;
+    if (type.flags & ts.TypeFlags.Union) {
+      const unionTypes = (type as ts.UnionType).types;
+      typeIsStrictNullish = unionTypes.every(
+        sub =>
+          (sub.flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined)) !== 0,
+      );
+    } else {
+      typeIsStrictNullish =
+        type.flags === ts.TypeFlags.Null ||
+        type.flags === ts.TypeFlags.Undefined;
+    }
+    if (typeIsStrictNullish) {
+      throw new ConfTSError(
+        "Non-null assertion applied to value typed as 'null' or 'undefined'",
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
+      );
+    }
+    if (value === null || value === undefined) {
+      throw new ConfTSError(
+        'Non-null assertion failed: value is null or undefined',
+        {
+          file: sourceFile.fileName,
+          ...ts.getLineAndCharacterOfPosition(
+            sourceFile,
+            expression.getStart(),
+          ),
+        },
+      );
+    }
+    return value;
   } else {
     throw new ConfTSError(
       `Unsupported syntax kind: ${ts.SyntaxKind[expression.kind]}`,

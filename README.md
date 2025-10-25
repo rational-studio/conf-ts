@@ -168,6 +168,7 @@ module.exports = {
 - Property access (including enums)
 - Binary operators (+ - * / % comparisons)
 - Unary prefix (+ - ! ~)
+- Non-null assertions (`!` postfix)
 - Conditional (ternary)
 - Parenthesized and `as`/`satisfies` expressions
 

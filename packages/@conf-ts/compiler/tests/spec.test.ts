@@ -66,6 +66,32 @@ describe('Spec Test', () => {
     assertSpecOutput('property-access');
   });
 
+  it('should handle non-null assertions', () => {
+    assertSpecOutput('non-null-basic');
+  });
+
+  it('should handle chained non-null assertions', () => {
+    assertSpecOutput('non-null-chained');
+  });
+
+  it('should handle non-null with type system features', () => {
+    assertSpecOutput('non-null-integration');
+  });
+
+  it('should throw an error for non-null on null value', () => {
+    assertSpecError(
+      'non-null-error-null',
+      'Non-null assertion failed: value is null or undefined',
+    );
+  });
+
+  it('should throw an error for non-null on strictly undefined type', () => {
+    assertSpecError(
+      'non-null-error-null-type',
+      "Non-null assertion applied to value typed as 'null' or 'undefined'",
+    );
+  });
+
   it('should throw an error for let/var variables', () => {
     assertSpecError(
       'unsupported-let-var',
