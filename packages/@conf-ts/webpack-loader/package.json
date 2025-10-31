@@ -1,6 +1,6 @@
 {
   "name": "@conf-ts/webpack-loader",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Webpack loader for conf-ts",
   "main": "dist/cjs/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "devDependencies": {
     "@types/webpack": "^5.28.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.3",
+    "vitest": "^4.0.6",
     "webpack": "^5.102.1"
   }
 }

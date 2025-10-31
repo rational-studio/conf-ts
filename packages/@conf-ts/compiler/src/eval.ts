@@ -601,6 +601,7 @@ export function evaluate(
         enumMap,
         macroImportsMap,
         evaluatedFiles,
+        context,
       );
     }
     const callee = expression.expression.getText(sourceFile);
@@ -715,8 +716,7 @@ export function evaluate(
     if (type.flags & ts.TypeFlags.Union) {
       const unionTypes = (type as ts.UnionType).types;
       typeIsStrictNullish = unionTypes.every(
-        sub =>
-          (sub.flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined)) !== 0,
+        sub => (sub.flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined)) !== 0,
       );
     } else {
       typeIsStrictNullish =

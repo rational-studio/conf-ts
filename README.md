@@ -107,6 +107,40 @@ export default {
 }
 ```
 
+### Nested macros
+
+Macros can be nested inside other macros and within array callbacks. Context (the callback parameter) is correctly scoped during nested evaluation.
+
+```ts
+import { arrayMap, arrayFilter, String, Number, Boolean } from '@conf-ts/macro';
+
+const users = [{ id: 1 }, { id: 2 }, { id: 3 }];
+const nums = [0, 1, 2];
+
+export default {
+  // Macro inside arrayMap callback, parameter is correctly passed
+  idStrings: arrayMap(users, u => String(u.id)), // ["1","2","3"]
+
+  // Nested casting chain
+  roundTrip: Number(String(42)), // 42
+
+  // Multi-layer nesting inside callback
+  truthyFlags: arrayMap(nums, n => Boolean(Number(String(n)))), // [false, true, true]
+
+  // Nested array macros in arguments + callback macro
+  filteredThenString: arrayMap(
+    arrayFilter(nums, n => Boolean(n)),
+    m => String(m)
+  ), // ["1","2"]
+}
+```
+
+Constraints remain the same for array callbacks:
+- Callback must be an arrow function with exactly one parameter
+- Body must be a single expression
+- Only the callback parameter and literals are allowed (property access and computed keys with the parameter are fine)
+- Nested macros are allowed both in the array argument and inside the callback body
+
 ## Programmatic API
 
 ### Node (compile files on disk)

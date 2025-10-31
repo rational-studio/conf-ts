@@ -55,4 +55,20 @@ describe('Macro Test', () => {
     process.env.CONF_TS_BAR = 'bar';
     assertMacroOutput('env');
   });
+
+  it('should support nested macro: single call compatibility', () => {
+    assertMacroOutput('nested-single');
+  });
+
+  it('should support nested macro: two-level chains', () => {
+    assertMacroOutput('nested-two');
+  });
+
+  it('should support nested macro: multi-level and nested array macros', () => {
+    assertMacroOutput('nested-multi');
+  });
+
+  it('should support nested macro: parameter passing in callbacks', () => {
+    assertMacroOutput('nested-param');
+  });
 });

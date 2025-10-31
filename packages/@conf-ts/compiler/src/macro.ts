@@ -24,6 +24,10 @@ const ENV_MACRO_FUNCTIONS = [
   { name: 'env', argLength: 1 },
 ] satisfies MacroFunction[];
 
+/**
+ * Evaluate env macro. Supports nested macros in the argument by evaluating in macro mode
+ * and propagating the current context to ensure correct scope handling.
+ */
 function evaluateEnv(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -31,6 +35,7 @@ function evaluateEnv(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   evaluatedFiles: Set<string>,
+  context?: { [name: string]: any },
 ) {
   const callee = expression.expression.getText(sourceFile);
   const macroFunction = ENV_MACRO_FUNCTIONS.find(
@@ -62,8 +67,9 @@ function evaluateEnv(
       typeChecker,
       enumMap,
       macroImportsMap,
-      false, // No macros in macros
+      true, // Allow nested macros inside env arguments
       evaluatedFiles,
+      context,
     );
     if (typeof argument !== 'string') {
       throw new ConfTSError('env macro argument must be a string', {
@@ -82,6 +88,11 @@ function evaluateEnv(
   return undefined;
 }
 
+/**
+ * Evaluate type casting macros (String, Number, Boolean).
+ * Nested macros inside the argument are supported by evaluating in macro mode
+ * and passing through current context for proper identifier resolution.
+ */
 function evaluateTypeCasting(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -89,6 +100,7 @@ function evaluateTypeCasting(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   evaluatedFiles: Set<string>,
+  context?: { [name: string]: any },
 ) {
   const callee = expression.expression.getText(sourceFile);
   const macroFunction = TYPE_CASTING_FUNCTIONS.find(
@@ -120,8 +132,9 @@ function evaluateTypeCasting(
       typeChecker,
       enumMap,
       macroImportsMap,
-      false, // No macros in macros
+      true, // Enable nested macros within type casting arguments
       evaluatedFiles,
+      context,
     );
     if (callee === 'String') {
       return String(argument);
@@ -136,6 +149,11 @@ function evaluateTypeCasting(
   return undefined;
 }
 
+/**
+ * Evaluate arrayMap macro.
+ * - Allows nested macros both in the array argument and within the callback body.
+ * - Propagates context so that callback parameter is correctly scoped in nested calls.
+ */
 function evaluateArrayMap(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -143,6 +161,7 @@ function evaluateArrayMap(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   evaluatedFiles: Set<string>,
+  context?: { [name: string]: any },
 ): any {
   const callee = expression.expression.getText(sourceFile);
   // Only process arrayMap here
@@ -167,8 +186,9 @@ function evaluateArrayMap(
     typeChecker,
     enumMap,
     macroImportsMap,
-    false,
+    true, // Allow nested macros inside the array argument
     evaluatedFiles,
+    context,
   );
   // The callback function
   const callback = expression.arguments[1];
@@ -192,6 +212,15 @@ function evaluateArrayMap(
   const paramName = callback.parameters[0].name.getText(sourceFile);
   function isAllowedIdentifier(node: ts.Node): boolean {
     if (ts.isIdentifier(node)) {
+      // Allow macro identifiers when used as a callee in the callback (nested macros)
+      if (
+        node.parent &&
+        ts.isCallExpression(node.parent) &&
+        node.parent.expression === node &&
+        (macroImportsMap[sourceFile.fileName] || new Set()).has(node.text)
+      ) {
+        return true;
+      }
       if (node.text === paramName) {
         return true;
       }
@@ -275,6 +304,11 @@ function evaluateArrayMap(
   });
 }
 
+/**
+ * Evaluate arrayFilter macro.
+ * - Allows nested macros both in the array argument and within the predicate body.
+ * - Propagates context for correct identifier resolution in nested calls.
+ */
 function evaluateArrayFilter(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -282,6 +316,7 @@ function evaluateArrayFilter(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   evaluatedFiles: Set<string>,
+  context?: { [name: string]: any },
 ): any {
   const callee = expression.expression.getText(sourceFile);
   // Only process arrayFilter here
@@ -304,8 +339,9 @@ function evaluateArrayFilter(
     typeChecker,
     enumMap,
     macroImportsMap,
-    false,
+    true, // Allow nested macros inside the array argument
     evaluatedFiles,
+    context,
   );
   const callback = expression.arguments[1];
   if (!ts.isArrowFunction(callback)) {
@@ -326,6 +362,15 @@ function evaluateArrayFilter(
   const paramName = callback.parameters[0].name.getText(sourceFile);
   function isAllowedIdentifier(node: ts.Node): boolean {
     if (ts.isIdentifier(node)) {
+      // Allow macro identifiers when used as a callee in the predicate (nested macros)
+      if (
+        node.parent &&
+        ts.isCallExpression(node.parent) &&
+        node.parent.expression === node &&
+        (macroImportsMap[sourceFile.fileName] || new Set()).has(node.text)
+      ) {
+        return true;
+      }
       if (node.text === paramName) {
         return true;
       }
@@ -410,6 +455,10 @@ function evaluateArrayFilter(
   });
 }
 
+/**
+ * Entry point for evaluating macros.
+ * Accepts current evaluation context to support nested macros with correct scoping.
+ */
 export function evaluateMacro(
   expression: ts.CallExpression,
   sourceFile: ts.SourceFile,
@@ -417,6 +466,7 @@ export function evaluateMacro(
   enumMap: { [filePath: string]: { [key: string]: any } },
   macroImportsMap: { [filePath: string]: Set<string> },
   evaluatedFiles: Set<string>,
+  context?: { [name: string]: any },
 ): any {
   let result = evaluateTypeCasting(
     expression,
@@ -425,6 +475,7 @@ export function evaluateMacro(
     enumMap,
     macroImportsMap,
     evaluatedFiles,
+    context,
   );
   if (result !== undefined) {
     return result;
@@ -436,6 +487,7 @@ export function evaluateMacro(
     enumMap,
     macroImportsMap,
     evaluatedFiles,
+    context,
   );
   if (result !== undefined) {
     return result;
@@ -447,6 +499,7 @@ export function evaluateMacro(
     enumMap,
     macroImportsMap,
     evaluatedFiles,
+    context,
   );
   if (result !== undefined) {
     return result;
@@ -458,6 +511,7 @@ export function evaluateMacro(
     enumMap,
     macroImportsMap,
     evaluatedFiles,
+    context,
   );
   if (result !== undefined) {
     return result;
